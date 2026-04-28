@@ -1,0 +1,154 @@
+{
+  "theme": "DARK",
+  "archetype": "7 (Electric & Neon)",
+  "game_name": "GRAV-SHIFT",
+  "typography": {
+    "headings": {
+      "font_family": "Unbounded",
+      "weights": ["700", "900"],
+      "usage": "Game Title, Massive Scores, Game Over Text"
+    },
+    "body": {
+      "font_family": "Azeret Mono",
+      "weights": ["400", "600"],
+      "usage": "HUD, Buttons, Leaderboard Text, Subtitles, Input Fields"
+    }
+  },
+  "colors": {
+    "background": {
+      "base": "#050508",
+      "surface": "#0C0C12",
+      "overlay": "rgba(5, 5, 8, 0.85)"
+    },
+    "text": {
+      "primary": "#F4F4F5",
+      "secondary": "#A1A1AA",
+      "neon_accent": "#00F0FF"
+    },
+    "accents": {
+      "cyan": "#00F0FF",
+      "coral": "#FF3366",
+      "yellow": "#FFD600",
+      "laser_green": "#39FF14"
+    }
+  },
+  "visual_enhancers": {
+    "effects": [
+      {
+        "name": "CRT Scanlines",
+        "css": "background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px); pointer-events: none; z-index: 50; position: fixed; inset: 0;"
+      },
+      {
+        "name": "Neon Glow",
+        "css": "filter: drop-shadow(0 0 8px currentColor);"
+      },
+      {
+        "name": "Vignette",
+        "css": "box-shadow: inset 0 0 100px rgba(0,0,0,0.9); pointer-events: none; z-index: 40; position: fixed; inset: 0;"
+      }
+    ],
+    "motion": [
+      "Flicker on load (opacity 0 to 1 with quick random stops to mimic tube warm-up)",
+      "Continuous subtle text shadow pulsation for title and primary CTAs",
+      "Hard cuts, no soft easing (step-end transitions for authentic retro feel, except for glow hover states)"
+    ]
+  },
+  "components": {
+    "buttons": {
+      "primary": {
+        "style": "bg-transparent border-2 border-[#00F0FF] text-[#00F0FF] uppercase tracking-[0.2em] px-8 py-4 font-['Azeret_Mono'] font-bold transition-all duration-200 shadow-[0_0_10px_rgba(0,240,255,0.2)] inset-shadow-[0_0_10px_rgba(0,240,255,0.2)]",
+        "hover": "hover:bg-[#00F0FF] hover:text-[#050508] hover:shadow-[0_0_20px_#00F0FF]"
+      },
+      "secondary": {
+        "style": "bg-transparent border border-[#FF3366] text-[#FF3366] uppercase tracking-[0.2em] px-6 py-3 font-['Azeret_Mono'] text-sm transition-all duration-200",
+        "hover": "hover:bg-[#FF3366] hover:text-[#050508] hover:shadow-[0_0_15px_#FF3366]"
+      }
+    },
+    "panels": {
+      "style": "bg-[#0C0C12]/95 border border-white/10 backdrop-blur-md p-8 shadow-[0_0_30px_rgba(0,240,255,0.05)]"
+    },
+    "inputs": {
+      "style": "bg-transparent border-b-2 border-white/20 text-white font-['Azeret_Mono'] text-2xl text-center uppercase tracking-widest focus:outline-none focus:border-[#00F0FF] focus:shadow-[0_4px_10px_rgba(0,240,255,0.3)] transition-all placeholder:text-white/20"
+    }
+  },
+  "screens": {
+    "main_menu": {
+      "layout": "Flex column, vertically and horizontally centered. Massive glowing title at the top, CTAs stacked below with generous padding.",
+      "elements": [
+        "Title: 'GRAV-SHIFT' (font: Unbounded, text-6xl md:text-8xl, text-[#F4F4F5], Cyan drop-shadow glow)",
+        "Play Button (Primary Button style, testid: play-button)",
+        "Leaderboard Button (Secondary Button style, testid: leaderboard-button)",
+        "Controls Hint: 'TAP: FLAP | CATCH ORBS: FLIP GRAVITY' (font: Azeret Mono, text-xs, text-gray-500, tracking-[0.2em], mt-12)",
+        "Sound Toggle Icon (Top right, absolute position, testid: mute-toggle)"
+      ]
+    },
+    "game_hud": {
+      "layout": "Absolute positioning layered completely over canvas. Needs to be distraction-free.",
+      "elements": [
+        "Score: Top center. Massive but semi-transparent (font: Unbounded, text-6xl md:text-8xl, text-white/30, pointer-events-none)",
+        "Gravity Indicator: Top left. Glowing arrow pointing up/down. Pulsing animation (text-[#FFD600] or text-[#FF3366] depending on direction)",
+        "Pause Button: Top right minimal icon (testid: pause-button)"
+      ]
+    },
+    "pause_overlay": {
+      "layout": "Full screen absolute overlay with deep dark overlay layer (`bg-[#050508]/90`). Content centered.",
+      "elements": [
+        "Paused Text: (font: Unbounded, text-4xl, tracking-widest, text-white, mb-8)",
+        "Resume Button (Primary, testid: resume-button)",
+        "Quit to Menu Button (Secondary, testid: quit-button, mt-4)"
+      ]
+    },
+    "game_over": {
+      "layout": "Centered floating panel (Panel style) inside a full screen dark overlay.",
+      "elements": [
+        "Game Over Header: (font: Unbounded, text-5xl md:text-6xl, text-[#FF3366], text-shadow glow)",
+        "Final Score Value: Massive number (font: Unbounded, text-7xl, text-white)",
+        "New High Score Label: Flashing opacity (text-[#39FF14], uppercase, tracking-widest, text-sm) - Only shows if applicable",
+        "Name Entry Input: Max length 3 or 5, minimal bottom border (Input style, testid: player-name-input)",
+        "Submit Score Button: (Primary, testid: submit-score-button, w-full mt-6)",
+        "Retry Button: (Secondary, testid: retry-button)",
+        "Menu Button: (Minimal text link, testid: menu-button)"
+      ]
+    },
+    "leaderboard": {
+      "layout": "Centered floating panel covering 80% max-w-2xl height. List format with strict grid rows.",
+      "elements": [
+        "Header: 'TOP OPERATORS' (font: Unbounded, text-3xl, text-[#00F0FF], mb-8)",
+        "List rows: Grid 3 cols (Rank, Name, Score). Rank 1: Yellow glow. Rank 2: Cyan glow. Rank 3: Coral glow. Others: White/60.",
+        "Close/Back Button: Absolute top right or fixed at bottom (testid: close-leaderboard-button)"
+      ]
+    }
+  },
+  "image_urls": {
+    "background_art": {
+      "url": "https://images.unsplash.com/photo-1548031045-0ce1bd4a94ca?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzOTB8MHwxfHNlYXJjaHwyfHxuZW9uJTIwcmV0cm8lMjBhcmNhZGUlMjBncmlkJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3Nzc0MTUzNTd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Pink and green grid/neon illustration. Use as subtle background blend layer behind the menu. Opacity should be around 10-15% to let the black void dominate."
+    },
+    "cabinet_texture": {
+      "url": "https://images.unsplash.com/photo-1664363243969-c4243c117c79?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzOTB8MHwxfHNlYXJjaHwxfHxuZW9uJTIwcmV0cm8lMjBhcmNhZGUlMjBncmlkJTIwYmFja2dyb3VuZHxlbnwwfHx8fDE3Nzc0MTUzNTd8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Background neon retro pattern for subtle styling or fallback texture."
+    }
+  },
+  "testing_attributes": {
+    "play_button": "data-testid=\"play-button\"",
+    "leaderboard_button": "data-testid=\"leaderboard-button\"",
+    "submit_score_button": "data-testid=\"submit-score-button\"",
+    "name_input": "data-testid=\"player-name-input\"",
+    "pause_button": "data-testid=\"pause-button\"",
+    "resume_button": "data-testid=\"resume-button\"",
+    "retry_button": "data-testid=\"retry-button\"",
+    "quit_button": "data-testid=\"quit-button\"",
+    "mute_toggle": "data-testid=\"mute-toggle\"",
+    "menu_button": "data-testid=\"menu-button\"",
+    "close_leaderboard_button": "data-testid=\"close-leaderboard-button\""
+  },
+  "instructions_to_main_agent": [
+    "Use standard DOM setup with React and Tailwind for the UI overlays. Game canvas runs independently behind these absolute/fixed UI layers.",
+    "Do NOT build generic Shadcn Card/Button components for the in-game screens. This breaks the arcade aesthetic. Use the raw Tailwind utility strings provided in `components` for custom styling.",
+    "Implement Google Fonts: 'Unbounded' (Display/Headings) and 'Azeret Mono' (HUD/Body/Controls).",
+    "To achieve the CRT effect, add a global div overlay with `pointer-events-none z-50 fixed inset-0` and apply the CRT Scanlines and Vignette CSS from the visual_enhancers.effects section.",
+    "FastAPI/Mongo backend needs a `POST /api/scores` and `GET /api/scores` endpoint for the global leaderboard functionality.",
+    "Implement audio contexts for the background music and simple sound effects (flap, flip, crash, game over). Connect mute_toggle state to audio contexts.",
+    "Ensure `data-testid` properties are applied exactly as specified for E2E testing."
+  ]
+}
