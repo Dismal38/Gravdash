@@ -644,7 +644,7 @@ export default function Game() {
     const isNewHigh = score > 0 && score >= highScore;
 
     return (
-        <div ref={containerRef} className="App crt-scanlines">
+        <div className="App crt-scanlines">
             <canvas
                 ref={canvasRef}
                 data-testid="game-canvas"
@@ -901,7 +901,7 @@ export default function Game() {
                                 type="button"
                                 data-testid="submit-score-button"
                                 onClick={submitScore}
-                                disabled={submitting || submitted || !playerName.trim()}
+                                disabled={submitting || submitted || !playerName.trim() || score === 0}
                                 className="btn-primary w-full"
                             >
                                 {submitted
