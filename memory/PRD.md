@@ -95,3 +95,20 @@
 - Backend: 20/20 tests still pass
 - Frontend: All flows + new share buttons verified
 - Android AAB build is a user-machine step (no Android SDK in this container — documented)
+
+## Update (2026-04-28 — session 3, code-review fixes)
+### Refactored
+- **Game.jsx split** from 1029 → **265 lines** (orchestrator only)
+- Extracted **lib/gameEngine.js** — pure engine (constants, createInitialState, step, draw, flap, helpers). No React.
+- Extracted screens: **MenuScreen.jsx**, **HUD.jsx**, **PauseScreen.jsx**, **GameOverScreen.jsx**
+- **Leaderboard.jsx** split: data fetching → `hooks/useLeaderboardScores.js`; row & body broken into sub-components
+- All previously-empty catch blocks now `console.warn` with prefixed messages
+- Added Python type hints across `server.py` (Dict/List/str/int return types, typed locals)
+
+### Bug fixed
+- **Mute-toggle was unclickable** on every overlay screen because corner controls (z-30) sat below overlays (z-40). Bumped to **z-50**. Verified via non-forced Playwright clicks: text now flips correctly on menu, paused, playing, gameover, and leaderboard screens.
+
+### Status
+- Backend: 20/20 pytest pass
+- Frontend: 100% regression pass, 0 console errors
+- Lint: clean
