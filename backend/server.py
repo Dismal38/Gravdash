@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,7 +6,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from typing import List
+from typing import Any, Dict, List
 import uuid
 from datetime import datetime, timezone
 
@@ -14,12 +14,12 @@ from datetime import datetime, timezone
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+mongo_url: str = os.environ['MONGO_URL']
+client: AsyncIOMotorClient = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-app = FastAPI()
-api_router = APIRouter(prefix="/api")
+app: FastAPI = FastAPI()
+api_router: APIRouter = APIRouter(prefix="/api")
 
 
 # ===== Status check (kept for platform health) =====
@@ -35,22 +35,22 @@ class StatusCheckCreate(BaseModel):
 
 
 @api_router.get("/")
-async def root():
+async def root() -> Dict[str, str]:
     return {"message": "GRAV-SHIFT API online"}
 
 
 @api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_obj = StatusCheck(**input.model_dump())
-    doc = status_obj.model_dump()
+async def create_status_check(input: StatusCheckCreate) -> StatusCheck:
+    status_obj: StatusCheck = StatusCheck(**input.model_dump())
+    doc: Dict[str, Any] = status_obj.model_dump()
     doc['timestamp'] = doc['timestamp'].isoformat()
     await db.status_checks.insert_one(doc)
     return status_obj
 
 
 @api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    rows = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+async def get_status_checks() -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
     for r in rows:
         if isinstance(r.get('timestamp'), str):
             r['timestamp'] = datetime.fromisoformat(r['timestamp'])
@@ -68,12 +68,11 @@ class ScoreCreate(BaseModel):
         v = v.strip().upper()
         if not v:
             raise ValueError("Name required")
-        # strip control chars, keep alphanumerics + space + a few symbols
-        allowed = []
+        allowed: List[str] = []
         for ch in v:
             if ch.isalnum() or ch in " _-.!":
                 allowed.append(ch)
-        cleaned = ''.join(allowed)[:12]
+        cleaned: str = ''.join(allowed)[:12]
         if not cleaned:
             raise ValueError("Name must contain alphanumeric characters")
         return cleaned
@@ -88,8 +87,8 @@ class ScoreOut(BaseModel):
 
 
 @api_router.post("/scores", response_model=ScoreOut)
-async def submit_score(payload: ScoreCreate):
-    doc = {
+async def submit_score(payload: ScoreCreate) -> ScoreOut:
+    doc: Dict[str, Any] = {
         "id": str(uuid.uuid4()),
         "name": payload.name,
         "score": int(payload.score),
@@ -105,12 +104,12 @@ async def submit_score(payload: ScoreCreate):
 
 
 @api_router.get("/scores", response_model=List[ScoreOut])
-async def list_scores(limit: int = 10):
+async def list_scores(limit: int = 10) -> List[ScoreOut]:
     if limit < 1:
         limit = 1
     if limit > 100:
         limit = 100
-    rows = await db.scores.find(
+    rows: List[Dict[str, Any]] = await db.scores.find(
         {}, {"_id": 0}
     ).sort([("score", -1), ("timestamp", 1)]).to_list(limit)
     out: List[ScoreOut] = []
@@ -123,10 +122,10 @@ async def list_scores(limit: int = 10):
 
 
 @api_router.get("/scores/rank")
-async def get_rank(score: int):
+async def get_rank(score: int) -> Dict[str, int]:
     """How many entries are strictly higher than the given score (0 = #1)."""
-    higher = await db.scores.count_documents({"score": {"$gt": int(score)}})
-    total = await db.scores.count_documents({})
+    higher: int = await db.scores.count_documents({"score": {"$gt": int(score)}})
+    total: int = await db.scores.count_documents({})
     return {"higher": higher, "rank": higher + 1, "total": total}
 
 
@@ -144,9 +143,9 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def shutdown_db_client() -> None:
     client.close()

@@ -16,6 +16,7 @@ function ensureCtx() {
         masterGain.gain.value = muted ? 0 : 0.5;
         masterGain.connect(ctx.destination);
     } catch (e) {
+        console.warn("[GRAV-SHIFT audio] context init failed:", e);
         return null;
     }
     return ctx;

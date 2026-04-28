@@ -26,7 +26,7 @@ export async function buildShareCard({ score, rank, total, isNewHigh, name }) {
             await document.fonts.ready;
         }
     } catch (e) {
-        /* noop */
+        console.warn("[GRAV-SHIFT shareCard] font wait failed:", e);
     }
 
     const canvas = document.createElement("canvas");
@@ -225,7 +225,7 @@ export async function shareCardBlob(blob, { score, rank, name } = {}) {
             return { method: "capacitor-share" };
         }
     } catch (e) {
-        // fall through
+        console.warn("[GRAV-SHIFT shareCard] capacitor share failed, trying web:", e);
     }
 
     // Web Share API with file
@@ -243,7 +243,7 @@ export async function shareCardBlob(blob, { score, rank, name } = {}) {
             return { method: "web-share-files" };
         }
     } catch (e) {
-        // fall through
+        console.warn("[GRAV-SHIFT shareCard] web file share failed, trying text:", e);
     }
 
     // Web Share API (text only)
@@ -253,7 +253,7 @@ export async function shareCardBlob(blob, { score, rank, name } = {}) {
             return { method: "web-share-text" };
         }
     } catch (e) {
-        // fall through
+        console.warn("[GRAV-SHIFT shareCard] web text share failed, falling back to download:", e);
     }
 
     // Final fallback: download the image
