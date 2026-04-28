@@ -112,3 +112,15 @@
 - Backend: 20/20 pytest pass
 - Frontend: 100% regression pass, 0 console errors
 - Lint: clean
+
+## Update (2026-04-28 — session 4, second code-review pass)
+### Refactored further
+- **Game.jsx**: 265 → **196 lines**. Extracted `useGameLoop`, `useGameInput`, `useCanvasResize` hooks.
+- **GameOverScreen.jsx**: 244 → **54 lines**. Split into `ScoreDisplay`, `NameSubmitForm`, `ShareSection`, `GameOverActions` (under `components/gameover/`).
+- **shareCard.js**: 262 → **125 lines**. Pure drawing helpers moved to `lib/shareCardDraw.js`. `shareCardBlob` now uses an iteration-of-strategies pattern (`tryCapacitorShare` → `tryWebShareFiles` → `tryWebShareText` → download fallback).
+- Cleaned 44 polluting `TEST*/HCKER*/NEOTRIM*` rows from the `scores` collection that were causing intermittent test failures.
+
+### Status
+- Backend: 20/20 pytest pass (clean DB)
+- Frontend: 100% regression pass — mute-toggle works on all 5 screens (non-forced clicks), 2nd-run state-pollution check passes, persistence survives reload, 0 console errors
+- Lint: clean
