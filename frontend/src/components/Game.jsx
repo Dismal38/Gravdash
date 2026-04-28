@@ -14,6 +14,8 @@ import {
     stopMusic,
 } from "../lib/audio";
 import Leaderboard from "./Leaderboard";
+import { buildShareCard, shareCardBlob, downloadBlob } from "../lib/shareCard";
+import { hapticMedium, hapticHeavy } from "../lib/native";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const HIGH_SCORE_KEY = "gravshift_local_high";
@@ -80,6 +82,8 @@ export default function Game() {
     );
     const [submitError, setSubmitError] = useState("");
     const [globalRank, setGlobalRank] = useState(null);
+    const [sharing, setSharing] = useState(false);
+    const [shareStatus, setShareStatus] = useState("");
 
     // ========================================================
     // Canvas sizing
@@ -367,6 +371,7 @@ export default function Game() {
         setGravityDir(s.gravityDir);
         s.bird.vy *= -0.5;
         sfxFlip();
+        hapticMedium();
         // burst particles
         const baseColor = source === "pipe" ? COLORS.particleB : COLORS.particleA;
         for (let i = 0; i < 24; i++) {
@@ -388,6 +393,7 @@ export default function Game() {
     function endRun(s) {
         sfxCrash();
         sfxGameOver();
+        hapticHeavy();
         stopMusic();
         // big shake + particles
         s.shake = 0.5;
@@ -634,10 +640,48 @@ export default function Game() {
             await axios.post(`${API}/scores`, { name, score });
             localStorage.setItem("gravshift_name", name);
             setSubmitted(true);
+            // refresh global rank after submit
+            try {
+                const r = await axios.get(`${API}/scores/rank`, { params: { score } });
+                setGlobalRank(r.data);
+            } catch (e) { /* noop */ }
         } catch (e) {
             setSubmitError("Could not submit. Try again.");
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const generateAndShare = async (mode /* 'share' | 'download' */) => {
+        if (sharing) return;
+        setSharing(true);
+        setShareStatus("");
+        try {
+            const blob = await buildShareCard({
+                score,
+                rank: globalRank ? globalRank.rank : null,
+                total: globalRank ? globalRank.total : null,
+                isNewHigh,
+                name: playerName,
+            });
+            if (!blob) throw new Error("blob failed");
+            if (mode === "download") {
+                downloadBlob(blob, `gravshift-${score}.png`);
+                setShareStatus("✓ SAVED");
+            } else {
+                const res = await shareCardBlob(blob, {
+                    score,
+                    rank: globalRank ? globalRank.rank : null,
+                    name: playerName,
+                });
+                if (res.method === "download") setShareStatus("✓ DOWNLOADED");
+                else setShareStatus("✓ SHARED");
+            }
+        } catch (e) {
+            setShareStatus("⚠ COULD NOT SHARE");
+        } finally {
+            setSharing(false);
+            setTimeout(() => setShareStatus(""), 2400);
         }
     };
 
@@ -910,6 +954,38 @@ export default function Game() {
                                       ? "SENDING…"
                                       : "SUBMIT SCORE"}
                             </button>
+
+                            <div className="flex gap-3 justify-center">
+                                <button
+                                    type="button"
+                                    data-testid="share-card-button"
+                                    onClick={() => generateAndShare("share")}
+                                    disabled={sharing || score === 0}
+                                    className="btn-secondary"
+                                    style={{ borderColor: "#39FF14", color: "#39FF14" }}
+                                >
+                                    {sharing ? "…" : "↗ SHARE"}
+                                </button>
+                                <button
+                                    type="button"
+                                    data-testid="download-card-button"
+                                    onClick={() => generateAndShare("download")}
+                                    disabled={sharing || score === 0}
+                                    className="btn-secondary"
+                                    style={{ borderColor: "#FFD600", color: "#FFD600" }}
+                                >
+                                    ⤓ SAVE PNG
+                                </button>
+                            </div>
+                            {shareStatus && (
+                                <div
+                                    className="font-mono uppercase tracking-[0.3em] text-xs text-center"
+                                    style={{ color: "rgba(244,244,245,0.7)" }}
+                                    data-testid="share-status"
+                                >
+                                    {shareStatus}
+                                </div>
+                            )}
                             <div className="flex gap-3 justify-center">
                                 <button
                                     type="button"

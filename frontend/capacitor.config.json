@@ -1,0 +1,23 @@
+{
+    "appId": "com.emergent.gravshift",
+    "appName": "GRAV-SHIFT",
+    "webDir": "build",
+    "bundledWebRuntime": false,
+    "backgroundColor": "#050508",
+    "android": {
+        "allowMixedContent": false,
+        "backgroundColor": "#050508"
+    },
+    "plugins": {
+        "SplashScreen": {
+            "launchShowDuration": 1200,
+            "backgroundColor": "#050508",
+            "androidScaleType": "CENTER_CROP",
+            "showSpinner": false
+        },
+        "StatusBar": {
+            "style": "DARK",
+            "backgroundColor": "#050508"
+        }
+    }
+}
