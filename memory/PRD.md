@@ -167,3 +167,19 @@
 - All Play Store visual assets ready: icon, splash, feature graphic, 2 phone screenshots
 - All wired into the Capacitor Android project (`/app/frontend/android/app/src/main/res/`)
 - Brand-consistent neon retro aesthetic across all assets
+
+## Update (2026-04-28 — session 8, Play Store listing copy)
+### Added
+- **`/app/resources/playstore-listing.md`** — drag-and-drop listing copy:
+  - 4 app name options (all under 30 chars)
+  - 3 short descriptions (all under 80 chars, primary 76 chars)
+  - Full description (2758 / 4000 chars) with emoji section breaks for scanability
+  - Category & 5 ASO tag recommendations
+  - Privacy policy template text + Data Safety form answers
+  - Content rating guidance (Everyone)
+  - Pricing recommendation (top-9 markets, $0.99)
+  - Launch-week realistic-target table + organic-growth plan
+
+### Status
+- Every Play Console field now has prepared copy, all char counts verified
+- Full Play Store submission package ready: code + AAB-buildable Capacitor project + 6 visual assets + listing copy + privacy policy text
