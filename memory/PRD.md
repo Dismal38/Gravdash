@@ -124,3 +124,15 @@
 - Backend: 20/20 pytest pass (clean DB)
 - Frontend: 100% regression pass — mute-toggle works on all 5 screens (non-forced clicks), 2nd-run state-pollution check passes, persistence survives reload, 0 console errors
 - Lint: clean
+
+## Update (2026-04-28 — session 5, hook-deps & storage hardening)
+### Refactored
+- **Single-subscription effects** via new `useEvent` hook (`hooks/useEvent.js`). `useGameLoop`, `useGameInput`, and `useCanvasResize` all subscribe ONCE for the component's lifetime (`[]` deps) — no more re-subscription when handler identities change.
+- **`highScoreRef` mirror** in Game.jsx → `handleDeath` is identity-stable (`[]` deps) yet always reads the latest highScore. Eliminates stale-closure risk entirely.
+- **Safe storage utility** (`lib/storage.js`) — `readNumber` / `readString` / `writeValue` with try/catch, sane fallbacks, and `console.warn` on failure. All localStorage access in Game.jsx + NameSubmitForm now goes through it.
+- **`AbortController`** added to `useLeaderboardScores` — cancels in-flight requests on unmount, no more setState-on-unmounted warnings on quick open/close.
+
+### Verified
+- Backend: 20/20 pytest pass
+- Frontend: 100% regression — fresh-localStorage fallback OK (BEST·0000 on first load), persistence after reload OK (round-trip via writeValue/readNumber), mute-toggle works on all 5 screens via non-forced clicks, leaderboard quick-open-then-close exercises AbortController with 0 warnings, 0 console errors
+- Lint: clean
