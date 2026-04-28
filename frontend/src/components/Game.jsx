@@ -1,17 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { unlockAudio, setMuted, isMuted, startMusic, stopMusic } from "../lib/audio";
-import {
-    createInitialState,
-    flap as engineFlap,
-    step as engineStep,
-    draw as engineDraw,
-} from "../lib/gameEngine";
+import { createInitialState, flap as engineFlap } from "../lib/gameEngine";
 import Leaderboard from "./Leaderboard";
 import MenuScreen from "./MenuScreen";
 import HUD from "./HUD";
 import PauseScreen from "./PauseScreen";
 import GameOverScreen from "./GameOverScreen";
+import { useGameLoop } from "../hooks/useGameLoop";
+import { useGameInput } from "../hooks/useGameInput";
+import { useCanvasResize } from "../hooks/useCanvasResize";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const HIGH_SCORE_KEY = "gravshift_local_high";
@@ -20,8 +18,6 @@ const PLAYER_NAME_KEY = "gravshift_name";
 export default function Game() {
     const canvasRef = useRef(null);
     const stateRef = useRef(null);
-    const rafRef = useRef(null);
-    const lastTimeRef = useRef(0);
     const phaseRef = useRef("menu");
 
     const [phase, setPhase] = useState("menu");
@@ -37,30 +33,11 @@ export default function Game() {
         () => localStorage.getItem(PLAYER_NAME_KEY) || "",
     );
 
-    // Keep ref in sync so the rAF loop doesn't restart on phase changes
     useEffect(() => {
         phaseRef.current = phase;
     }, [phase]);
 
-    // Resize canvas to viewport
-    useEffect(() => {
-        const handleResize = () => {
-            const c = canvasRef.current;
-            if (!c) return;
-            const dpr = window.devicePixelRatio || 1;
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            c.width = Math.floor(w * dpr);
-            c.height = Math.floor(h * dpr);
-            c.style.width = w + "px";
-            c.style.height = h + "px";
-            c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
-            if (stateRef.current) stateRef.current.viewport = { w, h };
-        };
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, []);
+    useCanvasResize(canvasRef, stateRef);
 
     const startGame = useCallback(() => {
         unlockAudio();
@@ -96,11 +73,9 @@ export default function Game() {
 
     const handleFlap = useCallback(() => {
         const s = stateRef.current;
-        if (!s) return;
-        engineFlap(s);
+        if (s) engineFlap(s);
     }, []);
 
-    // After a death, persist high-score and fetch global rank
     const handleDeath = useCallback(
         (finalScore) => {
             stopMusic();
@@ -121,7 +96,6 @@ export default function Game() {
         [highScore],
     );
 
-    // Persist player name when it changes
     const handleSetPlayerName = useCallback((next) => {
         setPlayerName(next);
         try {
@@ -133,66 +107,24 @@ export default function Game() {
         }
     }, []);
 
-    // Input listeners
-    useEffect(() => {
-        const canvasEl = canvasRef.current;
-        const onPointer = (e) => {
-            if (phaseRef.current !== "playing") return;
-            if (e.target && e.target.closest && e.target.closest("[data-ui-overlay='true']")) {
-                return;
-            }
-            e.preventDefault();
-            handleFlap();
-        };
-        const onKey = (e) => {
-            const cur = phaseRef.current;
-            if (e.code === "Space" || e.code === "ArrowUp") {
-                if (cur === "playing") {
-                    e.preventDefault();
-                    handleFlap();
-                } else if (cur === "menu" || cur === "gameover") {
-                    e.preventDefault();
-                    startGame();
-                }
-            } else if (e.code === "KeyP") {
-                if (cur === "playing") pauseGame();
-                else if (cur === "paused") resumeGame();
-            } else if (e.code === "KeyM") {
-                toggleMute();
-            }
-        };
-        if (canvasEl) canvasEl.addEventListener("pointerdown", onPointer);
-        window.addEventListener("keydown", onKey);
-        return () => {
-            if (canvasEl) canvasEl.removeEventListener("pointerdown", onPointer);
-            window.removeEventListener("keydown", onKey);
-        };
-    }, [handleFlap, startGame, pauseGame, resumeGame, toggleMute]);
+    useGameInput({
+        canvasRef,
+        phaseRef,
+        onFlap: handleFlap,
+        onStart: startGame,
+        onPause: pauseGame,
+        onResume: resumeGame,
+        onMute: toggleMute,
+    });
 
-    // rAF loop — single subscription, reads phase from ref so it doesn't churn
-    useEffect(() => {
-        const tick = (t) => {
-            const dt = Math.min(0.05, (t - lastTimeRef.current) / 1000 || 0);
-            lastTimeRef.current = t;
-            const s = stateRef.current;
-            if (s && phaseRef.current === "playing") {
-                const result = engineStep(s, dt, {
-                    onScore: (newScore) => setScore(newScore),
-                });
-                if (result.gravityDir !== gravityDir) {
-                    setGravityDir(result.gravityDir);
-                }
-                if (result.died) {
-                    handleDeath(result.score);
-                }
-            }
-            engineDraw(canvasRef.current, s);
-            rafRef.current = requestAnimationFrame(tick);
-        };
-        lastTimeRef.current = performance.now();
-        rafRef.current = requestAnimationFrame(tick);
-        return () => cancelAnimationFrame(rafRef.current);
-    }, [gravityDir, handleDeath]);
+    useGameLoop({
+        canvasRef,
+        stateRef,
+        phaseRef,
+        onScore: setScore,
+        onGravityChange: setGravityDir,
+        onDeath: handleDeath,
+    });
 
     const isNewHigh = score > 0 && score >= highScore;
 
@@ -204,7 +136,6 @@ export default function Game() {
                 style={{ position: "absolute", inset: 0, display: "block" }}
             />
 
-            {/* Top corner UI (always visible — z-50 to sit above overlay screens) */}
             <div
                 data-ui-overlay="true"
                 className="absolute top-4 right-4 z-50 flex items-center gap-2"
