@@ -18,5 +18,7 @@ export function useCanvasResize(canvasRef, stateRef) {
         handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-    }, [canvasRef, stateRef]);
+        // canvasRef/stateRef are mutable refs (stable identity). Single subscription.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 }

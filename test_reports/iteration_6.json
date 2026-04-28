@@ -1,0 +1,35 @@
+{
+  "summary": "Full regression after stale-closure / hook-deps refactor (useEvent + lib/storage.js + AbortController). Backend pytest 20/20 PASS in 1.48s. Frontend: every flow works identically — fresh-localStorage first-load shows BEST·0000 fallback (storage.readNumber/readString fallback path verified), game loop runs every frame, HUD renders gravity (↓GRAVITY DOWN initially), pause via PAUSE button + P key both work, resume via Resume button + P key both work, quit-to-menu works, leaderboard quick-open-then-close exercises AbortController (no setState-on-unmounted warnings, no console errors), leaderboard fully loads 10 rows when waited, mute-toggle non-forced clickable on ALL 5 screens (menu/leaderboard/playing/paused/gameover) and flips text correctly each time, natural game-over reached, score=0 correctly disables submit/share/download buttons, localStorage persistence verified — pre-seeded high=99 + name=TESTGUY survive a hard reload via writeValue/readNumber/readString round-trip (BEST·0099 visible in menu). Zero console errors, zero page errors throughout the entire run. The new useEvent hook keeps handler identity stable so all 3 effects (useGameLoop / useGameInput / useCanvasResize) subscribe exactly once with [] deps; handleDeath reads the latest highScore through highScoreRef without any stale-closure regression.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_gravshift_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "useEvent (16 lines) is a textbook implementation: ref updated in useEffect (post-render) plus a second useRef holding the stable wrapper invoked via ref.current(...). Note: the wrapper reads `ref.current` at call time, which is updated AFTER commit — for handlers fired during render this would technically read a stale value, but none of the consumers (rAF tick / pointer / keydown / resize) fire during render so this is safe in practice.",
+    "lib/storage.js is clean: try/catch around localStorage protects against private-mode / quota errors, readNumber uses parseInt + Number.isFinite (not just truthy) so '0' is preserved correctly, readString uses || fallback (acceptable since empty string isn't a valid name anyway). Verified: first-load with cleared localStorage returns fallback (BEST·0000), and writes round-trip across hard reload (BEST·0099).",
+    "useLeaderboardScores: AbortController correctly aborts in-flight axios request on unmount; the catch clause handles both axios.isCancel(e) AND e.name === 'CanceledError' (good defense across axios versions). The `if (!controller.signal.aborted) setLoading(false)` guard prevents setState-on-unmounted warning. Verified empirically — quick open/close sequence produced 0 console warnings.",
+    "Game.jsx highScoreRef pattern is correct: state setter still triggers re-render for HUD/menu, ref stays in sync via a tiny useEffect, and handleDeath (deps=[]) reads highScoreRef.current so it's never stale even though handleDeath identity is now permanently frozen for the rAF effect's lifetime. This is exactly the right tradeoff — single subscription + no stale closure.",
+    "Minor (non-blocking): useGameLoop / useGameInput / useCanvasResize all use `// eslint-disable-next-line react-hooks/exhaustive-deps` over `[]`. This is the correct & idiomatic escape hatch for single-subscription effects with all deps routed through refs. Comments above each disable line explain why — good documentation hygiene.",
+    "Minor (non-blocking, carry-over from iteration_5): could not exercise SHARE / SAVE-PNG / SUBMIT in this run because every natural game-over in headless scored 0 (the bird falls before clearing a pipe). Disabled-state assertion still validates the score==0 gating logic. If non-zero scoring is needed for future tests, consider exposing a debug flag to seed score>0 or speed up the engine."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (20/20 pytest in 1.48s)",
+    "frontend": "100% — fresh-localStorage fallback OK, persistence after reload OK (BEST·0099 visible), 5/5 mute-toggle scenarios PASS (menu/leaderboard/playing/paused/gameover, all NON-FORCED clicks), pause via PAUSE button + P key both PASS, resume via Resume button + P key both PASS, quit-to-menu PASS, leaderboard quick-open-quick-close (AbortController) PASS with 0 warnings, leaderboard full-load shows 10 rows, natural game-over reached with all panel testids, score=0 disables submit/share/download as expected, 0 console errors, 0 page errors"
+  },
+  "seed_data_creation": "None this run — leaderboard already had >=10 rows from prior iterations.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "GRAV-SHIFT post-stale-closure-refactor regression PASSES end-to-end. Verified the useEvent + highScoreRef + AbortController + lib/storage.js wrappers all behave correctly. Useful testids: play-button, leaderboard-button, mute-toggle, pause-button, resume-button, quit-button, hud-score, hud-gravity, gameover-panel, final-score, player-name-input, submit-score-button, share-card-button, download-card-button, share-status, retry-button, leaderboard-button-go, menu-button, close-leaderboard-button (NOT 'leaderboard-close'), leaderboard-row-{rank}, leaderboard-list, leaderboard-loading, leaderboard-error, leaderboard-empty, leaderboard-screen, new-high-badge, submit-error, game-canvas. Use NON-FORCED Playwright clicks on mute-toggle. To verify localStorage round-trip without scoring, pre-seed via page.evaluate then reload — that path is now exercised. Backend regression file: /app/backend/tests/test_gravshift_api.py.",
+  "rca of the issue": "N/A — refactor was behavior-preserving and verified so. The useEvent wrapper + highScoreRef cleanly eliminated the stale-closure risk while collapsing every hook to single-subscription [] deps. AbortController on leaderboard fetch handles the unmount-during-pending-request edge case. lib/storage.js fallback paths verified on a fresh-localStorage first load."
+}

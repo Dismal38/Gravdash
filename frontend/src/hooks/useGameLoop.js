@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { step as engineStep, draw as engineDraw } from "../lib/gameEngine";
+import { useEvent } from "./useEvent";
 
 /**
- * Run the requestAnimationFrame loop. Reads phase from a ref so the effect
- * subscribes once. Forwards engine events to React via callbacks.
+ * Run the requestAnimationFrame loop. All handlers are routed through stable
+ * refs so the effect subscribes exactly once for the component's lifetime.
  */
 export function useGameLoop({
     canvasRef,
@@ -13,6 +14,10 @@ export function useGameLoop({
     onGravityChange,
     onDeath,
 }) {
+    const handleScore = useEvent(onScore);
+    const handleGravityChange = useEvent(onGravityChange);
+    const handleDeath = useEvent(onDeath);
+
     const lastTimeRef = useRef(0);
     const rafRef = useRef(null);
     const lastGravityRef = useRef(1);
@@ -23,12 +28,12 @@ export function useGameLoop({
             lastTimeRef.current = t;
             const s = stateRef.current;
             if (s && phaseRef.current === "playing") {
-                const result = engineStep(s, dt, { onScore });
+                const result = engineStep(s, dt, { onScore: handleScore });
                 if (result.gravityDir !== lastGravityRef.current) {
                     lastGravityRef.current = result.gravityDir;
-                    onGravityChange(result.gravityDir);
+                    handleGravityChange(result.gravityDir);
                 }
-                if (result.died) onDeath(result.score);
+                if (result.died) handleDeath(result.score);
             }
             engineDraw(canvasRef.current, s);
             rafRef.current = requestAnimationFrame(tick);
@@ -36,5 +41,9 @@ export function useGameLoop({
         lastTimeRef.current = performance.now();
         rafRef.current = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(rafRef.current);
-    }, [canvasRef, stateRef, phaseRef, onScore, onGravityChange, onDeath]);
+        // canvasRef/stateRef/phaseRef are mutable refs (stable identity),
+        // and handleScore/handleGravityChange/handleDeath are useEvent stable
+        // wrappers — none of them should be deps. Single subscription.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 }

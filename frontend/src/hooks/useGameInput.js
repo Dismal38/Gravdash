@@ -1,10 +1,17 @@
 import { useEffect } from "react";
+import { useEvent } from "./useEvent";
 
 /**
  * Wires global keyboard + canvas pointer input to game actions.
- * Phase is read from a ref to avoid re-binding listeners on every state change.
+ * All handlers go through stable refs so the effect subscribes once.
  */
 export function useGameInput({ canvasRef, phaseRef, onFlap, onStart, onPause, onResume, onMute }) {
+    const handleFlap = useEvent(onFlap);
+    const handleStart = useEvent(onStart);
+    const handlePause = useEvent(onPause);
+    const handleResume = useEvent(onResume);
+    const handleMute = useEvent(onMute);
+
     useEffect(() => {
         const canvasEl = canvasRef.current;
 
@@ -14,7 +21,7 @@ export function useGameInput({ canvasRef, phaseRef, onFlap, onStart, onPause, on
                 return;
             }
             e.preventDefault();
-            onFlap();
+            handleFlap();
         };
 
         const onKey = (e) => {
@@ -22,16 +29,16 @@ export function useGameInput({ canvasRef, phaseRef, onFlap, onStart, onPause, on
             if (e.code === "Space" || e.code === "ArrowUp") {
                 if (cur === "playing") {
                     e.preventDefault();
-                    onFlap();
+                    handleFlap();
                 } else if (cur === "menu" || cur === "gameover") {
                     e.preventDefault();
-                    onStart();
+                    handleStart();
                 }
             } else if (e.code === "KeyP") {
-                if (cur === "playing") onPause();
-                else if (cur === "paused") onResume();
+                if (cur === "playing") handlePause();
+                else if (cur === "paused") handleResume();
             } else if (e.code === "KeyM") {
-                onMute();
+                handleMute();
             }
         };
 
@@ -41,5 +48,7 @@ export function useGameInput({ canvasRef, phaseRef, onFlap, onStart, onPause, on
             if (canvasEl) canvasEl.removeEventListener("pointerdown", onPointer);
             window.removeEventListener("keydown", onKey);
         };
-    }, [canvasRef, phaseRef, onFlap, onStart, onPause, onResume, onMute]);
+        // Refs and useEvent wrappers are all stable. Single subscription.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 }

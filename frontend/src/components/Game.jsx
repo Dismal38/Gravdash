@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { unlockAudio, setMuted, isMuted, startMusic, stopMusic } from "../lib/audio";
 import { createInitialState, flap as engineFlap } from "../lib/gameEngine";
+import { readNumber, readString, writeValue } from "../lib/storage";
 import Leaderboard from "./Leaderboard";
 import MenuScreen from "./MenuScreen";
 import HUD from "./HUD";
@@ -22,16 +23,18 @@ export default function Game() {
 
     const [phase, setPhase] = useState("menu");
     const [score, setScore] = useState(0);
-    const [highScore, setHighScore] = useState(() => {
-        const raw = localStorage.getItem(HIGH_SCORE_KEY);
-        return raw ? parseInt(raw, 10) || 0 : 0;
-    });
+    const [highScore, setHighScore] = useState(() => readNumber(HIGH_SCORE_KEY, 0));
     const [gravityDir, setGravityDir] = useState(1);
     const [muted, setMutedState] = useState(false);
     const [globalRank, setGlobalRank] = useState(null);
-    const [playerName, setPlayerName] = useState(
-        () => localStorage.getItem(PLAYER_NAME_KEY) || "",
-    );
+    const [playerName, setPlayerName] = useState(() => readString(PLAYER_NAME_KEY, ""));
+
+    // Mirror state into refs so long-lived effects can read fresh values
+    // without making React's state churn drive effect re-subscription.
+    const highScoreRef = useRef(highScore);
+    useEffect(() => {
+        highScoreRef.current = highScore;
+    }, [highScore]);
 
     useEffect(() => {
         phaseRef.current = phase;
@@ -76,34 +79,23 @@ export default function Game() {
         if (s) engineFlap(s);
     }, []);
 
-    const handleDeath = useCallback(
-        (finalScore) => {
-            stopMusic();
-            if (finalScore > highScore) {
-                setHighScore(finalScore);
-                try {
-                    localStorage.setItem(HIGH_SCORE_KEY, String(finalScore));
-                } catch (e) {
-                    console.warn("[GRAV-SHIFT] could not persist high score:", e);
-                }
-            }
-            axios
-                .get(`${API}/scores/rank`, { params: { score: finalScore } })
-                .then((r) => setGlobalRank(r.data))
-                .catch((e) => console.warn("[GRAV-SHIFT] rank fetch failed:", e));
-            setPhase("gameover");
-        },
-        [highScore],
-    );
+    const handleDeath = useCallback((finalScore) => {
+        stopMusic();
+        if (finalScore > highScoreRef.current) {
+            setHighScore(finalScore);
+            writeValue(HIGH_SCORE_KEY, finalScore);
+        }
+        axios
+            .get(`${API}/scores/rank`, { params: { score: finalScore } })
+            .then((r) => setGlobalRank(r.data))
+            .catch((e) => console.warn("[GRAV-SHIFT] rank fetch failed:", e));
+        setPhase("gameover");
+    }, []);
 
     const handleSetPlayerName = useCallback((next) => {
         setPlayerName(next);
-        try {
-            if (next && next.trim()) {
-                localStorage.setItem(PLAYER_NAME_KEY, next.trim().toUpperCase());
-            }
-        } catch (e) {
-            console.warn("[GRAV-SHIFT] could not persist name:", e);
+        if (next && next.trim()) {
+            writeValue(PLAYER_NAME_KEY, next.trim().toUpperCase());
         }
     }, []);
 

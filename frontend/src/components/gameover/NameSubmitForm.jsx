@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { writeValue } from "../../lib/storage";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -28,7 +29,7 @@ export default function NameSubmitForm({
         setError("");
         try {
             await axios.post(`${API}/scores`, { name, score });
-            localStorage.setItem("gravshift_name", name);
+            writeValue("gravshift_name", name);
             setSubmitted(true);
             try {
                 const r = await axios.get(`${API}/scores/rank`, { params: { score } });

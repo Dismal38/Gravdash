@@ -9,25 +9,25 @@ export function useLeaderboardScores(limit = 10) {
     const [error, setError] = useState("");
 
     useEffect(() => {
-        let mounted = true;
+        const controller = new AbortController();
         const run = async () => {
             try {
-                const r = await axios.get(`${API}/scores`, { params: { limit } });
-                if (mounted) {
-                    setScores(r.data || []);
-                    setError("");
-                }
+                const r = await axios.get(`${API}/scores`, {
+                    params: { limit },
+                    signal: controller.signal,
+                });
+                setScores(r.data || []);
+                setError("");
             } catch (e) {
+                if (axios.isCancel(e) || e.name === "CanceledError") return;
                 console.warn("[GRAV-SHIFT leaderboard] fetch failed:", e);
-                if (mounted) setError("Could not load leaderboard");
+                setError("Could not load leaderboard");
             } finally {
-                if (mounted) setLoading(false);
+                if (!controller.signal.aborted) setLoading(false);
             }
         };
         run();
-        return () => {
-            mounted = false;
-        };
+        return () => controller.abort();
     }, [limit]);
 
     return { scores, loading, error };
