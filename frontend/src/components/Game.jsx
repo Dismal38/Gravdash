@@ -204,10 +204,10 @@ export default function Game() {
                 style={{ position: "absolute", inset: 0, display: "block" }}
             />
 
-            {/* Top corner UI (always visible) */}
+            {/* Top corner UI (always visible — z-50 to sit above overlay screens) */}
             <div
                 data-ui-overlay="true"
-                className="absolute top-4 right-4 z-30 flex items-center gap-2"
+                className="absolute top-4 right-4 z-50 flex items-center gap-2"
             >
                 <button
                     type="button"
