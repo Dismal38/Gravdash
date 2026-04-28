@@ -83,3 +83,15 @@
 ## Notes
 - Game is fully E2E functional. Backend leaderboard verified with curl + automated tests. Frontend verified end-to-end including natural game-over loop.
 - No third-party paid integrations used. No auth required.
+
+## Update (2026-04-28 — session 2)
+### Added
+- **Shareable game-over card** — generates a 1080×1080 PNG with score, global rank, name, NEW HIGH badge, branded GRAV-SHIFT styling. SHARE button uses Capacitor native share on Android, Web Share API in browser, falls back to PNG download. SAVE PNG button always downloads.
+- **Capacitor wrapper for Android** — `@capacitor/{core,cli,android,haptics,share,status-bar,splash-screen}` v7 installed; `capacitor.config.json` configured (appId `com.emergent.gravshift`, dark `#050508` theme); `npx cap add android` scaffolded the full Android Studio project at `/app/frontend/android/`.
+- **Native haptics** — medium impulse on every gravity flip, heavy on crash. No-op on web.
+- **Play Store guide** — `/app/PLAY_STORE_GUIDE.md` with full publish workflow ($0.99 paid setup, signed AAB build, internal testing).
+
+### Status
+- Backend: 20/20 tests still pass
+- Frontend: All flows + new share buttons verified
+- Android AAB build is a user-machine step (no Android SDK in this container — documented)

@@ -217,8 +217,6 @@ export async function shareCardBlob(blob, { score, rank, name } = {}) {
     try {
         if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
             const { Share } = await import("@capacitor/share");
-            const { Filesystem, Directory } = await import("@capacitor/filesystem").catch(() => ({}));
-            // Native share with text only as a robust fallback (file sharing requires Filesystem on Android)
             await Share.share({
                 title: "GRAV-SHIFT score",
                 text,
