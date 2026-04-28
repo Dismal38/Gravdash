@@ -81,16 +81,22 @@ Capacitor will copy the new `build/` into the Android assets.
 
 ## 4. App icon + splash screen
 
-Generate a 1024×1024 PNG icon (neon yellow ship on `#050508`) and a 2732×2732
-splash. Then run the Capacitor assets generator:
+**✅ Already done for you.** The brand assets (icon, splash, feature graphic)
+are pre-generated in `/app/resources/` and the Android density variants are
+already wired into `frontend/android/app/src/main/res/` — see
+`/app/resources/README.md` for details.
+
+If you want to **regenerate** with tweaks:
 
 ```bash
-yarn add -D @capacitor/assets
-# put icon.png and splash.png in /resources
-npx capacitor-assets generate --android
+python /app/scripts/gen_assets.py    # rebuild source PNGs
+cd frontend
+npx capacitor-assets generate --android --assetPath assets
 ```
 
-This creates all the density variants under `android/app/src/main/res/`.
+If you want to **replace with your own designs**, drop your 1024² icon,
+1024² icon-foreground, and 2732² splash into `frontend/assets/` then run the
+capacitor-assets command above.
 
 ---
 
