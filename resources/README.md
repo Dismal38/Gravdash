@@ -9,6 +9,8 @@ to match the in-game neon retro aesthetic exactly.
 | `icon-fg.png` | 1024×1024 | Foreground layer for Android adaptive icon (transparent BG) |
 | `splash.png` | 2732×2732 | Capacitor splash, center-cropped to any device size |
 | `feature.png` | 1024×500 | Play Store **Feature graphic** (required for listing) |
+| `phone-1.png` | 1080×2400 | Play Store phone screenshot — main menu (drag-and-drop ready) |
+| `phone-2.png` | 1080×2400 | Play Store phone screenshot — gameplay action shot |
 
 ## Already wired into Android
 
@@ -33,20 +35,20 @@ npx capacitor-assets generate --android --assetPath assets
 ## To regenerate the source PNGs themselves
 
 ```bash
-python /app/scripts/gen_assets.py
+python /app/scripts/gen_assets.py            # icon, splash, feature graphic
+python /app/scripts/gen_phone_screenshots.py # phone-1.png + phone-2.png
 ```
 
-This runs in ~2s using Pillow + FreeSans Bold.
+This runs in ~3s using Pillow + FreeSans Bold.
 
 ## Play Store upload checklist
 
 When uploading to the Play Console you'll need:
 
-- **App icon**: `icon.png` (the Console will ask for 512×512 — Console
-  auto-resizes from 1024).
+- **App icon**: `icon.png` (Console will accept 512–1024).
 - **Feature graphic**: `feature.png` (1024×500 — exact size required).
-- **Phone screenshots** (min 2): take from a real device or emulator running
-  the signed APK.
+- **Phone screenshots** (min 2): drag in `phone-1.png` and `phone-2.png`. These
+  are pre-built at the Play Store recommended size and use the actual game art.
 
 For the listing description, here's a copy-paste starter:
 

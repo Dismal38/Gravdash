@@ -154,3 +154,16 @@
 - All assets fully wired into the Capacitor Android project
 - Brand consistency: icon/splash/feature all use the same neon retro palette as the in-game art (yellow ship, cyan accents, void black, coral chroma)
 - Web app still passes all regression tests (just smoke-checked menu render — pristine)
+
+## Update (2026-04-28 — session 7, phone screenshots)
+### Added
+- **`/app/resources/phone-1.png`** (1080×2400) — Play Store menu screenshot, all elements present (title with chroma split, PLAY button with triangle icon, LEADERBOARD button with diamond icon, color-coded controls hint, BEST · 0047)
+- **`/app/resources/phone-2.png`** (1080×2400) — Play Store gameplay screenshot showing yellow ship mid-flap with cyan particle trail, two cyan pipes, one red striped flip-pipe, green gravity orb, big translucent score "12", top-left gravity-down indicator, top-right SOUND ON / PAUSE
+- **`/app/scripts/gen_phone_screenshots.py`** — Pillow generator, regen-able in <2s
+- Both screenshots verified by AI vision: no rendering glitches, all icons drawn as polygons (no broken Unicode glyphs)
+- Updated `/app/resources/README.md` with phone screenshot rows
+
+### Status
+- All Play Store visual assets ready: icon, splash, feature graphic, 2 phone screenshots
+- All wired into the Capacitor Android project (`/app/frontend/android/app/src/main/res/`)
+- Brand-consistent neon retro aesthetic across all assets
