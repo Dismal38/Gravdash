@@ -1,12 +1,14 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import hmac
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import uuid
 from datetime import datetime, timezone
 
@@ -127,6 +129,82 @@ async def get_rank(score: int) -> Dict[str, int]:
     higher: int = await db.scores.count_documents({"score": {"$gt": int(score)}})
     total: int = await db.scores.count_documents({})
     return {"higher": higher, "rank": higher + 1, "total": total}
+
+
+# ===== Admin (single-token Bearer auth) =====
+ADMIN_TOKEN: str = os.environ.get("ADMIN_TOKEN", "")
+admin_security = HTTPBearer(auto_error=False)
+
+
+def require_admin(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(admin_security),
+) -> str:
+    """Validate the admin Bearer token using constant-time comparison."""
+    if not ADMIN_TOKEN:
+        # Server misconfiguration — refuse all admin requests rather than open up.
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin endpoints not configured",
+        )
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing admin credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    provided = credentials.credentials.encode("utf-8")
+    expected = ADMIN_TOKEN.encode("utf-8")
+    if not hmac.compare_digest(provided, expected):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return "admin"
+
+
+@api_router.get("/admin/scores", response_model=List[ScoreOut])
+async def admin_list_scores(
+    _: str = Depends(require_admin),
+    limit: int = 50,
+    name: Optional[str] = None,
+    min_score: Optional[int] = None,
+) -> List[ScoreOut]:
+    """List leaderboard entries with optional filters. Newest first."""
+    if limit < 1:
+        limit = 1
+    if limit > 500:
+        limit = 500
+    query: Dict[str, Any] = {}
+    if name:
+        query["name"] = {"$regex": name.strip().upper(), "$options": "i"}
+    if min_score is not None:
+        query["score"] = {"$gte": int(min_score)}
+    rows: List[Dict[str, Any]] = await db.scores.find(
+        query, {"_id": 0}
+    ).sort([("timestamp", -1)]).to_list(limit)
+    out: List[ScoreOut] = []
+    for r in rows:
+        ts = r.get("timestamp")
+        if isinstance(ts, str):
+            ts = datetime.fromisoformat(ts)
+        out.append(ScoreOut(id=r["id"], name=r["name"], score=int(r["score"]), timestamp=ts))
+    return out
+
+
+@api_router.delete("/admin/scores/{score_id}")
+async def admin_delete_score(
+    score_id: str,
+    _: str = Depends(require_admin),
+) -> Dict[str, Any]:
+    """Delete a single leaderboard entry by id (UUID stored in `id` field)."""
+    result = await db.scores.delete_one({"id": score_id})
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Score entry not found",
+        )
+    return {"deleted": score_id, "ok": True}
 
 
 app.include_router(api_router)

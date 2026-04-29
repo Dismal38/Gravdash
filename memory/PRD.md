@@ -183,3 +183,21 @@
 ### Status
 - Every Play Console field now has prepared copy, all char counts verified
 - Full Play Store submission package ready: code + AAB-buildable Capacitor project + 6 visual assets + listing copy + privacy policy text
+
+## Update (2026-04-28 — session 9, admin moderation API)
+### Added
+- **`GET /api/admin/scores`** with optional filters (`limit`, `name`, `min_score`) — returns scores newest-first
+- **`DELETE /api/admin/scores/{id}`** — removes a single entry by UUID, 404 if missing
+- **HTTP Bearer auth** with constant-time `hmac.compare_digest`, returns proper 401 + `WWW-Authenticate: Bearer` header on missing/wrong token
+- `ADMIN_TOKEN` generated via `secrets.token_urlsafe(32)` and stored in `backend/.env` only
+- 10 new pytest tests covering auth (no token / wrong token / Basic scheme rejected) + functional (list, filter by name, filter by min_score, delete round-trip, 404 on unknown id, limit bounds)
+- Cleaned 37 polluting test rows during integration
+
+### Validation
+- **Backend tests: 30/30 pass** (20 original + 10 admin)
+- All curl scenarios verified (401 / 401 / 404 / 200 / filter regex)
+- Lint clean
+
+### Documented
+- `/app/memory/test_credentials.md` — admin token + rotation recipe + quick purge example
+- `/app/PLAY_STORE_GUIDE.md` — added admin moderation section

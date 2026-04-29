@@ -167,4 +167,32 @@ npx cap sync android
 - **StatusBar / SplashScreen** — configured for dark theme with `#050508`
   background to match the game void seamlessly.
 
+---
+
+## Admin moderation API
+
+The backend exposes two Bearer-token-protected endpoints so you can purge
+spammy or offensive leaderboard entries without touching MongoDB directly.
+
+The token lives in `backend/.env` as `ADMIN_TOKEN`. **Rotate it before
+production deployment** (see `/app/memory/test_credentials.md` for current
+dev token + rotation recipe).
+
+```bash
+TOKEN=<your_admin_token>
+URL=https://your-deployed-backend.example.com
+
+# List 50 most recent scores
+curl -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores?limit=50"
+
+# Filter by name (case-insensitive substring)
+curl -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores?name=CHEAT"
+
+# Filter by minimum score (e.g. find suspiciously high entries)
+curl -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores?min_score=5000000"
+
+# Delete a single entry by id
+curl -X DELETE -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores/<id>"
+```
+
 You're ready to ship. 🚀
