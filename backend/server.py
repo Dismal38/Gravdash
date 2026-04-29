@@ -6,6 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import hmac
 import logging
+import re
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import Any, Dict, List, Optional
@@ -177,7 +178,8 @@ async def admin_list_scores(
         limit = 500
     query: Dict[str, Any] = {}
     if name:
-        query["name"] = {"$regex": name.strip().upper(), "$options": "i"}
+        # Treat input as literal substring, not a regex pattern.
+        query["name"] = {"$regex": re.escape(name.strip().upper()), "$options": "i"}
     if min_score is not None:
         query["score"] = {"$gte": int(min_score)}
     rows: List[Dict[str, Any]] = await db.scores.find(

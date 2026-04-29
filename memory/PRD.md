@@ -201,3 +201,6 @@
 ### Documented
 - `/app/memory/test_credentials.md` — admin token + rotation recipe + quick purge example
 - `/app/PLAY_STORE_GUIDE.md` — added admin moderation section
+
+### Hardened (post-test-agent review)
+- `re.escape()` applied to admin name filter so admins can paste any literal substring (incl. regex metacharacters like `.`, `(`, `+`) without triggering Mongo regex error 51091 or accidental over-matching.
