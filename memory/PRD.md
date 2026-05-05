@@ -204,3 +204,22 @@
 
 ### Hardened (post-test-agent review)
 - `re.escape()` applied to admin name filter so admins can paste any literal substring (incl. regex metacharacters like `.`, `(`, `+`) without triggering Mongo regex error 51091 or accidental over-matching.
+
+## Update (2026-04-28 — session 10, free-tier deploy prep)
+### Added
+- **`/app/backend/Procfile`** — `web: uvicorn server:app --host 0.0.0.0 --port $PORT`
+- **`/app/backend/Dockerfile`** — slim Python 3.11-slim image as fallback
+- **`/app/backend/runtime.txt`** — `python-3.11`
+- **`/app/frontend/.env.production`** — placeholder `REACT_APP_BACKEND_URL` template
+- **`/app/DEPLOY_BACKEND_KOYEB.md`** — full step-by-step ($0/mo Koyeb + Atlas) deploy guide with copy-paste commands, troubleshooting table, post-launch maintenance recipes (rotate token, purge spammy entries)
+- Hardened `.gitignore` to explicitly ignore `.env` / `.env.local` / `**/.env` while allowing the `.env.production` template through
+
+### Verified
+- 35/35 backend tests still pass
+- Local backend still healthy
+- `git check-ignore` confirms `backend/.env` and `frontend/.env` are excluded → no secrets can leak
+
+### Deploy summary for user
+- Total cost: **$0/mo** (Koyeb Nano + Atlas M0)
+- Total setup time: ~20 min
+- Existing Emergent subscription untouched (website stays live at $10/mo)

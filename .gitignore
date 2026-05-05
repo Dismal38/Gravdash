@@ -31,6 +31,19 @@ dist/
 dist
 
 # Environment files (comprehensive coverage)
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+**/.env
+**/.env.local
+backend/.env
+frontend/.env
+# But DO commit the production env templates (they have placeholder values)
+!frontend/.env.production
+!backend/.env.example
 
 *token.json*
 *credentials.json*

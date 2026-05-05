@@ -209,6 +209,53 @@ async def admin_delete_score(
     return {"deleted": score_id, "ok": True}
 
 
+@api_router.post("/admin/scores/purge")
+async def admin_purge_scores(
+    _: str = Depends(require_admin),
+    name_pattern: Optional[str] = None,
+    min_score: Optional[int] = None,
+    confirm: bool = False,
+) -> Dict[str, Any]:
+    """Bulk-delete all entries matching the given filters.
+
+    At least one of `name_pattern` (literal substring, case-insensitive) or
+    `min_score` MUST be provided — refusing to nuke the whole collection on
+    an empty filter is intentional. Pass `confirm=true` to actually execute;
+    otherwise this returns a dry-run count so you can sanity-check first.
+    """
+    query: Dict[str, Any] = {}
+    if name_pattern:
+        query["name"] = {
+            "$regex": re.escape(name_pattern.strip().upper()),
+            "$options": "i",
+        }
+    if min_score is not None:
+        query["score"] = {"$gte": int(min_score)}
+
+    if not query:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide at least one filter (name_pattern or min_score)",
+        )
+
+    matched: int = await db.scores.count_documents(query)
+
+    if not confirm:
+        return {"would_delete": matched, "filters": {
+            "name_pattern": name_pattern,
+            "min_score": min_score,
+        }, "deleted": 0, "ok": True, "dry_run": True}
+
+    result = await db.scores.delete_many(query)
+    return {
+        "deleted": result.deleted_count,
+        "matched": matched,
+        "filters": {"name_pattern": name_pattern, "min_score": min_score},
+        "ok": True,
+        "dry_run": False,
+    }
+
+
 app.include_router(api_router)
 
 app.add_middleware(
