@@ -7,8 +7,10 @@
 //   gameover → return to menu.
 // No-op on web.
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useEvent } from "./useEvent";
+
+const EXIT_PROMPT_WINDOW_MS = 2000;
 
 let AppMod = null;
 let appModLoaded = false;
@@ -31,48 +33,56 @@ async function getAppMod() {
     return AppMod;
 }
 
+async function tryExitApp() {
+    const mod = await getAppMod();
+    if (!mod || !mod.App || !mod.App.exitApp) return false;
+    try {
+        await mod.App.exitApp();
+        return true;
+    } catch (e) {
+        console.warn("[GRAV-SHIFT back-button] exitApp failed:", e);
+        return false;
+    }
+}
+
 export function useAndroidBackButton({ phaseRef, onPause, onResume, onMenu, onExitPrompt }) {
     const handlePause = useEvent(onPause);
     const handleResume = useEvent(onResume);
     const handleMenu = useEvent(onMenu);
     const handleExitPrompt = useEvent(onExitPrompt);
+    const lastBackOnMenuAtRef = useRef(0);
 
     useEffect(() => {
-        let listenerHandle = null;
-        let lastBackOnMenuAt = 0;
-
-        const route = async () => {
-            const cur = phaseRef.current;
-            if (cur === "playing") {
-                handlePause();
-                return;
-            }
-            if (cur === "paused") {
-                handleResume();
-                return;
-            }
-            if (cur === "gameover") {
-                handleMenu();
-                return;
-            }
-            // menu — double-tap-to-exit
-            const now = Date.now();
-            if (now - lastBackOnMenuAt < 2000) {
-                const mod = await getAppMod();
-                if (mod && mod.App && mod.App.exitApp) {
-                    try {
-                        await mod.App.exitApp();
-                        return;
-                    } catch (e) {
-                        console.warn("[GRAV-SHIFT back-button] exitApp failed:", e);
-                    }
-                }
-            } else {
-                lastBackOnMenuAt = now;
-                handleExitPrompt();
-            }
+        // Phase → handler dispatch table for non-menu phases.
+        // Menu phase needs special "double-tap-to-exit" handling, kept separate.
+        const phaseHandlers = {
+            playing: handlePause,
+            paused: handleResume,
+            gameover: handleMenu,
         };
 
+        const handleMenuBack = async () => {
+            const now = Date.now();
+            if (now - lastBackOnMenuAtRef.current < EXIT_PROMPT_WINDOW_MS) {
+                await tryExitApp();
+                return;
+            }
+            lastBackOnMenuAtRef.current = now;
+            handleExitPrompt();
+        };
+
+        const route = async () => {
+            const phase = phaseRef.current;
+            const handler = phaseHandlers[phase];
+            if (handler) {
+                handler();
+                return;
+            }
+            // Fallthrough = menu (or any unknown phase) → exit-prompt path
+            await handleMenuBack();
+        };
+
+        let listenerHandle = null;
         (async () => {
             const mod = await getAppMod();
             if (!mod || !mod.App || !mod.App.addListener) return;

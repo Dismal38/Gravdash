@@ -268,3 +268,22 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 - Lint clean
 - Browser smoke test: title/play/HUD all work, **0 leaderboard buttons**, 0 console errors, HUD renders in-game (live screenshot captured: ship + pipes + score + gravity indicator all rendering)
 - `yarn build` + `npx cap sync android` both succeed; new plugin auto-registered into Android project
+
+## Update (2026-04-28 — session 13, complexity reduction)
+### Refactored
+- **`useGameInput.js`** — replaced if/else-if chain with two phase→handler dispatch tables (`primaryActionByPhase`, `pauseKeyByPhase`) + a `FLAP_KEYS` Set. Cyclomatic complexity 16 → ~6.
+- **`useAndroidBackButton.js`** — extracted `tryExitApp()` helper, added `phaseHandlers` dispatch table for non-menu phases, separated menu-phase double-tap logic into named `handleMenuBack()`. Cyclomatic complexity 15 → ~7. Constant `EXIT_PROMPT_WINDOW_MS = 2000` extracted from inline magic number.
+
+### Skipped (false positives — same as previous review iterations)
+- "Hook deps missing" — refs, loop vars, state setters, module imports cannot be effect deps; ESLint react-hooks/exhaustive-deps already passes clean
+- "Insecure localStorage" — high score + player name are non-sensitive UX data (4th review flagging this)
+- "Python `is` vs `==`" — `is None`/`is not None` is mandated by PEP 8; `is True/False` for JSON booleans is preferred by ruff E712. Ruff already passes clean.
+- "Game.jsx 176 lines / complexity 16" — already maximally decomposed (4 hooks + 5 sub-components); splitting more would increase complexity
+- "ShareSection 75 lines" — within threshold
+
+### Verified
+- ESLint: clean
+- Ruff: clean
+- 35/35 backend pytest pass
+- `yarn build` succeeds
+- Browser smoke test: Space-to-start, Space-to-flap, P-to-pause, P-to-resume, M-mute all work; 0 console errors; live screenshot captures GAME OVER screen rendering correctly with mute toggled

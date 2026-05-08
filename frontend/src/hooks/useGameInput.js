@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useEvent } from "./useEvent";
 
+const FLAP_KEYS = new Set(["Space", "ArrowUp"]);
+
 /**
  * Wires global keyboard + canvas pointer input to game actions.
  * All handlers go through stable refs so the effect subscribes once.
@@ -15,6 +17,19 @@ export function useGameInput({ canvasRef, phaseRef, onFlap, onStart, onPause, on
     useEffect(() => {
         const canvasEl = canvasRef.current;
 
+        // Phase-specific reaction to the "primary action" (tap / space / arrow-up)
+        const primaryActionByPhase = {
+            playing: handleFlap,
+            menu: handleStart,
+            gameover: handleStart,
+        };
+
+        // Phase-specific reaction to the pause/resume key (P)
+        const pauseKeyByPhase = {
+            playing: handlePause,
+            paused: handleResume,
+        };
+
         const onPointer = (e) => {
             if (phaseRef.current !== "playing") return;
             if (e.target && e.target.closest && e.target.closest("[data-ui-overlay='true']")) {
@@ -25,19 +40,20 @@ export function useGameInput({ canvasRef, phaseRef, onFlap, onStart, onPause, on
         };
 
         const onKey = (e) => {
-            const cur = phaseRef.current;
-            if (e.code === "Space" || e.code === "ArrowUp") {
-                if (cur === "playing") {
+            if (FLAP_KEYS.has(e.code)) {
+                const action = primaryActionByPhase[phaseRef.current];
+                if (action) {
                     e.preventDefault();
-                    handleFlap();
-                } else if (cur === "menu" || cur === "gameover") {
-                    e.preventDefault();
-                    handleStart();
+                    action();
                 }
-            } else if (e.code === "KeyP") {
-                if (cur === "playing") handlePause();
-                else if (cur === "paused") handleResume();
-            } else if (e.code === "KeyM") {
+                return;
+            }
+            if (e.code === "KeyP") {
+                const action = pauseKeyByPhase[phaseRef.current];
+                if (action) action();
+                return;
+            }
+            if (e.code === "KeyM") {
                 handleMute();
             }
         };
