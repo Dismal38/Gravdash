@@ -252,3 +252,19 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 - Play Console: **$25** one-time
 - **Total to launch: $25 one-time, $0 added monthly**
 - Steps remaining for user: build signed AAB locally → upload to Play Console
+
+## Update (2026-04-28 — session 12, Android back-button polish)
+### Added
+- **`@capacitor/app@7.1.2`** plugin (5 Capacitor plugins now total)
+- **`/app/frontend/src/hooks/useAndroidBackButton.js`** — phase-aware Android hardware Back button handler:
+  - Menu: 1st press shows toast "PRESS BACK AGAIN TO EXIT", 2nd press within 2s calls `App.exitApp()`
+  - Playing: pauses the game
+  - Paused: resumes
+  - Game over: returns to menu
+- **Exit-prompt toast** in Game.jsx — bottom-center, panel-style with coral border + glow, 2s timeout
+- No-op on web (only fires inside the Capacitor APK)
+
+### Verified
+- Lint clean
+- Browser smoke test: title/play/HUD all work, **0 leaderboard buttons**, 0 console errors, HUD renders in-game (live screenshot captured: ship + pipes + score + gravity indicator all rendering)
+- `yarn build` + `npx cap sync android` both succeed; new plugin auto-registered into Android project

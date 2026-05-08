@@ -9,6 +9,7 @@ import GameOverScreen from "./GameOverScreen";
 import { useGameLoop } from "../hooks/useGameLoop";
 import { useGameInput } from "../hooks/useGameInput";
 import { useCanvasResize } from "../hooks/useCanvasResize";
+import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
 
 const HIGH_SCORE_KEY = "gravshift_local_high";
 const PLAYER_NAME_KEY = "gravshift_name";
@@ -24,6 +25,7 @@ export default function Game() {
     const [gravityDir, setGravityDir] = useState(1);
     const [muted, setMutedState] = useState(false);
     const [playerName, setPlayerName] = useState(() => readString(PLAYER_NAME_KEY, ""));
+    const [exitPrompt, setExitPrompt] = useState(false);
 
     const highScoreRef = useRef(highScore);
     useEffect(() => {
@@ -98,6 +100,17 @@ export default function Game() {
         onMute: toggleMute,
     });
 
+    useAndroidBackButton({
+        phaseRef,
+        onPause: pauseGame,
+        onResume: resumeGame,
+        onMenu: quitToMenu,
+        onExitPrompt: () => {
+            setExitPrompt(true);
+            setTimeout(() => setExitPrompt(false), 2000);
+        },
+    });
+
     useGameLoop({
         canvasRef,
         stateRef,
@@ -158,6 +171,21 @@ export default function Game() {
                     onRetry={startGame}
                     onMenu={quitToMenu}
                 />
+            )}
+
+            {/* Android back-button "press again to exit" toast */}
+            {exitPrompt && phase === "menu" && (
+                <div
+                    data-testid="exit-prompt-toast"
+                    className="absolute left-1/2 -translate-x-1/2 bottom-16 z-50 font-mono uppercase tracking-[0.3em] text-xs px-5 py-3 panel"
+                    style={{
+                        color: "rgba(244,244,245,0.9)",
+                        borderColor: "rgba(255, 51, 102, 0.55)",
+                        boxShadow: "0 0 24px rgba(255, 51, 102, 0.35)",
+                    }}
+                >
+                    PRESS BACK AGAIN TO EXIT
+                </div>
             )}
         </div>
     );
