@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import axios from "axios";
 import { unlockAudio, setMuted, isMuted, startMusic, stopMusic } from "../lib/audio";
 import { createInitialState, flap as engineFlap } from "../lib/gameEngine";
 import { readNumber, readString, writeValue } from "../lib/storage";
-import Leaderboard from "./Leaderboard";
 import MenuScreen from "./MenuScreen";
 import HUD from "./HUD";
 import PauseScreen from "./PauseScreen";
@@ -12,7 +10,6 @@ import { useGameLoop } from "../hooks/useGameLoop";
 import { useGameInput } from "../hooks/useGameInput";
 import { useCanvasResize } from "../hooks/useCanvasResize";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const HIGH_SCORE_KEY = "gravshift_local_high";
 const PLAYER_NAME_KEY = "gravshift_name";
 
@@ -26,11 +23,8 @@ export default function Game() {
     const [highScore, setHighScore] = useState(() => readNumber(HIGH_SCORE_KEY, 0));
     const [gravityDir, setGravityDir] = useState(1);
     const [muted, setMutedState] = useState(false);
-    const [globalRank, setGlobalRank] = useState(null);
     const [playerName, setPlayerName] = useState(() => readString(PLAYER_NAME_KEY, ""));
 
-    // Mirror state into refs so long-lived effects can read fresh values
-    // without making React's state churn drive effect re-subscription.
     const highScoreRef = useRef(highScore);
     useEffect(() => {
         highScoreRef.current = highScore;
@@ -51,7 +45,6 @@ export default function Game() {
         });
         setScore(0);
         setGravityDir(1);
-        setGlobalRank(null);
         setPhase("playing");
     }, []);
 
@@ -85,10 +78,6 @@ export default function Game() {
             setHighScore(finalScore);
             writeValue(HIGH_SCORE_KEY, finalScore);
         }
-        axios
-            .get(`${API}/scores/rank`, { params: { score: finalScore } })
-            .then((r) => setGlobalRank(r.data))
-            .catch((e) => console.warn("[GRAV-SHIFT] rank fetch failed:", e));
         setPhase("gameover");
     }, []);
 
@@ -155,13 +144,7 @@ export default function Game() {
 
             {phase === "playing" && <HUD score={score} gravityDir={gravityDir} />}
 
-            {phase === "menu" && (
-                <MenuScreen
-                    highScore={highScore}
-                    onPlay={startGame}
-                    onLeaderboard={() => setPhase("leaderboard")}
-                />
-            )}
+            {phase === "menu" && <MenuScreen highScore={highScore} onPlay={startGame} />}
 
             {phase === "paused" && <PauseScreen onResume={resumeGame} onQuit={quitToMenu} />}
 
@@ -170,18 +153,11 @@ export default function Game() {
                     score={score}
                     highScore={highScore}
                     isNewHigh={isNewHigh}
-                    globalRank={globalRank}
-                    setGlobalRank={setGlobalRank}
                     playerName={playerName}
                     setPlayerName={handleSetPlayerName}
                     onRetry={startGame}
                     onMenu={quitToMenu}
-                    onShowLeaderboard={() => setPhase("leaderboard")}
                 />
-            )}
-
-            {phase === "leaderboard" && (
-                <Leaderboard onClose={() => setPhase(score > 0 ? "gameover" : "menu")} />
             )}
         </div>
     );

@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function MenuScreen({ highScore, onPlay, onLeaderboard }) {
+export default function MenuScreen({ highScore, onPlay }) {
     return (
         <div
             data-ui-overlay="true"
@@ -35,14 +35,6 @@ export default function MenuScreen({ highScore, onPlay, onLeaderboard }) {
                     style={{ fontSize: "1rem" }}
                 >
                     ▶ PLAY
-                </button>
-                <button
-                    type="button"
-                    data-testid="leaderboard-button"
-                    onClick={onLeaderboard}
-                    className="btn-secondary"
-                >
-                    ◆ LEADERBOARD
                 </button>
             </div>
 

@@ -22,9 +22,9 @@ GRAV-SHIFT: One Tap Arcade
 ## Short description (max 80 chars)
 
 ```
-One tap. Three ways to flip gravity. One run. Can you climb the leaderboard?
+One tap. Three ways to flip gravity. Pure-skill arcade. No ads. No internet.
 ```
-**77 / 80** — answers "what is the game?" + drops a hook.
+**75 / 80** — answers "what is the game?" + drops a hook.
 
 ### Alternates
 - `Tap to flap. Catch orbs to flip gravity. Endless neon arcade reflex run.` (72)
@@ -151,17 +151,15 @@ your-email@yourstudio.com
 https://yoursite.com/gravshift/privacy
 ```
 Minimum text the policy must contain:
-> GRAV-SHIFT collects only the player name and score that you voluntarily
-> submit to the global leaderboard. No advertising IDs, no analytics SDKs,
-> no third-party trackers. Data is stored on our servers and is not sold
-> or shared.
+> GRAV-SHIFT is a 100% offline game. We do not collect, store, or transmit
+> any personal data. The app does not connect to any server. Your high score
+> and player name (optional, used only for personalizing share cards) are
+> stored only on your device.
 
 ### Data Safety form (REQUIRED)
-- **Data collected:** Name (optional, only if you submit a score), Game
-  performance / scores (only if submitted)
-- **Encrypted in transit:** YES
-- **Users can request deletion:** add a contact email; manually purge from
-  MongoDB on request
+- **Data collected:** NONE — the app is fully offline
+- **Encrypted in transit:** N/A
+- **Users can request deletion:** N/A — no server-side data
 - **Data shared with third parties:** NO
 
 ### Content rating
@@ -195,6 +193,11 @@ page views to installs. The way to push past these:
 2. Reach out to indie arcade YouTubers (search "best one-tap games 2026").
 3. Submit to **Indie Game** subreddits and Discord communities.
 4. Run a **48-hour free promotion** in week 2 to seed reviews.
+
+---
+
+You're ready to ship. 🚀
+** in week 2 to seed reviews.
 
 ---
 

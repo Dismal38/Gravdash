@@ -1,6 +1,5 @@
 import React from "react";
 import ScoreDisplay from "./gameover/ScoreDisplay";
-import NameSubmitForm from "./gameover/NameSubmitForm";
 import ShareSection from "./gameover/ShareSection";
 import GameOverActions from "./gameover/GameOverActions";
 
@@ -8,14 +7,15 @@ export default function GameOverScreen({
     score,
     highScore,
     isNewHigh,
-    globalRank,
-    setGlobalRank,
     playerName,
     setPlayerName,
     onRetry,
     onMenu,
-    onShowLeaderboard,
 }) {
+    const handleNameChange = (e) => {
+        setPlayerName(e.target.value.replace(/[^a-zA-Z0-9 _\-.!]/g, "").toUpperCase());
+    };
+
     return (
         <div
             data-ui-overlay="true"
@@ -27,26 +27,35 @@ export default function GameOverScreen({
                     score={score}
                     isNewHigh={isNewHigh}
                     highScore={highScore}
-                    globalRank={globalRank}
+                    globalRank={null}
                 />
-                <NameSubmitForm
-                    score={score}
-                    playerName={playerName}
-                    setPlayerName={setPlayerName}
-                    setGlobalRank={setGlobalRank}
-                />
-                <div className="mt-3 flex flex-col gap-3">
+
+                {/* Optional name field — purely local, used only to personalize the share card */}
+                <div className="mt-8">
+                    <input
+                        data-testid="player-name-input"
+                        className="input-arcade"
+                        placeholder="YOUR NAME (OPTIONAL)"
+                        maxLength={12}
+                        value={playerName}
+                        onChange={handleNameChange}
+                    />
+                    <div
+                        className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em]"
+                        style={{ color: "rgba(244,244,245,0.35)" }}
+                    >
+                        SHOWS UP ON YOUR SHARE CARD
+                    </div>
+                </div>
+
+                <div className="mt-6 flex flex-col gap-3">
                     <ShareSection
                         score={score}
                         isNewHigh={isNewHigh}
-                        globalRank={globalRank}
+                        globalRank={null}
                         playerName={playerName}
                     />
-                    <GameOverActions
-                        onRetry={onRetry}
-                        onShowLeaderboard={onShowLeaderboard}
-                        onMenu={onMenu}
-                    />
+                    <GameOverActions onRetry={onRetry} onMenu={onMenu} />
                 </div>
             </div>
         </div>
