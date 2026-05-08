@@ -223,3 +223,32 @@
 - Total cost: **$0/mo** (Koyeb Nano + Atlas M0)
 - Total setup time: ~20 min
 - Existing Emergent subscription untouched (website stays live at $10/mo)
+
+## Update (2026-04-28 — session 11, OFFLINE PIVOT)
+### User decision
+Per user choice "ship offline-only for $0", the global leaderboard was stripped from the frontend. Game is now a 100% local arcade title with no backend dependency.
+
+### Changes
+- **Removed network code from frontend:** axios, API const, leaderboard phase, globalRank state, score submit + rank fetch
+- **Deleted:** `Leaderboard.jsx`, `useLeaderboardScores.js`, `NameSubmitForm.jsx`, `DEPLOY_BACKEND_KOYEB.md`, `Procfile`, `Dockerfile`, `runtime.txt`, `frontend/.env.production`
+- **Simplified:** `MenuScreen` (removed leaderboard button), `GameOverScreen` (removed submit form + leaderboard button), `GameOverActions` (only RETRY + MENU)
+- **Kept:** optional name input on game-over (saves to localStorage only, used purely to personalize the share-card PNG)
+- **Listing copy updated:** removed leaderboard mentions, updated short description, simplified Privacy Policy (now declares zero data collection), simplified Data Safety form answers
+- **Backend preserved untouched** — server.py, all 35 pytest tests still pass — kept for possible future re-enable
+- **PLAY_STORE_GUIDE.md** updated: deploy-backend section now says "skip — offline build", admin moderation section marked as not needed for current shipped build
+
+### Verified by testing agent (iteration_8)
+- 35/35 backend pytest pass
+- Frontend: zero /api/ requests during the entire flow (network listener counted 0)
+- Zero console errors
+- localStorage persistence works (high score + player name) across reload
+- Offline mode (page.context.set_offline(True)) — game still plays, dies, saves
+- All deletions confirmed on disk
+- Source grep confirms zero axios/fetch/backend-URL usage in /app/frontend/src
+
+### Cost & launch path now
+- Backend hosting: **$0/mo** (no backend deployed)
+- Emergent subscription: **$10/mo** (existing, unchanged — keeps user's website live)
+- Play Console: **$25** one-time
+- **Total to launch: $25 one-time, $0 added monthly**
+- Steps remaining for user: build signed AAB locally → upload to Play Console

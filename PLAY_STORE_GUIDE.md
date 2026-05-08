@@ -61,21 +61,26 @@ can refactor this for you (Refactor → Rename Package).
 
 ## 3. Point the production build at your live API
 
-The leaderboard backend is the FastAPI app (`/app/backend/server.py`).
+**🎮 OFFLINE BUILD — SKIP THIS SECTION!**
 
-1. Deploy the backend somewhere public and HTTPS (the Emergent platform's
-   "Deploy" button is the easiest — give it `MONGO_URL` + `DB_NAME`).
-2. Create `frontend/.env.production` with:
-   ```
-   REACT_APP_BACKEND_URL=https://your-deployed-api.example.com
-   ```
-3. Rebuild & resync:
-   ```bash
-   yarn build
-   npx cap sync android
-   ```
+GRAV-SHIFT now ships as a 100% offline game. There is **no backend to deploy**.
+The React build is bundled directly into the Android APK by Capacitor and
+requires zero internet connection to play. Your high score and player name
+are saved locally on the device.
 
-Capacitor will copy the new `build/` into the Android assets.
+If you ever want to re-enable an online leaderboard later, the backend code
+is preserved in `/app/backend/` and the original deployment guidance is in
+the git history.
+
+For now — just run:
+
+```bash
+cd frontend
+yarn build
+npx cap sync android
+```
+
+…and proceed to step 4.
 
 ---
 
@@ -171,28 +176,13 @@ npx cap sync android
 
 ## Admin moderation API
 
-The backend exposes two Bearer-token-protected endpoints so you can purge
-spammy or offensive leaderboard entries without touching MongoDB directly.
+**🎮 OFFLINE BUILD — NOT NEEDED**
 
-The token lives in `backend/.env` as `ADMIN_TOKEN`. **Rotate it before
-production deployment** (see `/app/memory/test_credentials.md` for current
-dev token + rotation recipe).
+The shipped game is fully offline. The admin endpoints below are part of
+the optional backend (preserved in `/app/backend/` for future use) but are
+not deployed and are not callable from the released Android app.
 
-```bash
-TOKEN=<your_admin_token>
-URL=https://your-deployed-backend.example.com
-
-# List 50 most recent scores
-curl -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores?limit=50"
-
-# Filter by name (case-insensitive substring)
-curl -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores?name=CHEAT"
-
-# Filter by minimum score (e.g. find suspiciously high entries)
-curl -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores?min_score=5000000"
-
-# Delete a single entry by id
-curl -X DELETE -H "Authorization: Bearer $TOKEN" "$URL/api/admin/scores/<id>"
-```
+If you re-enable an online leaderboard in a future update, see the admin
+moderation section in the git history of this file.
 
 You're ready to ship. 🚀
