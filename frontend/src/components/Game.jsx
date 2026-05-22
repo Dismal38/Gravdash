@@ -94,6 +94,7 @@ export default function Game() {
 
     const quitToMenu = useCallback(() => {
         stopMusic();
+        stateRef.current = null;
         setPhase("menu");
     }, []);
 
