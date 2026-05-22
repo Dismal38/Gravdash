@@ -107,6 +107,13 @@ capacitor-assets command above.
 
 ## 5. Open in Android Studio + build a release AAB
 
+**🆕 RECOMMENDED — Use GitHub Actions instead.** A complete cloud-build
+workflow is already wired at `.github/workflows/build-android.yml`. See
+**`/app/KEYSTORE_SETUP.md`** for the 7-step walkthrough — you don't need
+Android Studio, only Java + a terminal (any laptop can run this).
+
+If you *do* prefer Android Studio:
+
 ```bash
 npx cap open android
 ```

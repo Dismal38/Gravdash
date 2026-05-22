@@ -1,5 +1,5 @@
 {
-    "appId": "com.emergent.gravshift",
+    "appId": "com.gravshift.game",
     "appName": "GRAV-SHIFT",
     "webDir": "build",
     "bundledWebRuntime": false,
