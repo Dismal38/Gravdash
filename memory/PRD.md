@@ -287,3 +287,25 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 - 35/35 backend pytest pass
 - `yarn build` succeeds
 - Browser smoke test: Space-to-start, Space-to-flap, P-to-pause, P-to-resume, M-mute all work; 0 console errors; live screenshot captures GAME OVER screen rendering correctly with mute toggled
+
+
+## Update (2026-02 — session 14, CI/CD + Privacy Policy)
+### Added
+- **`.github/workflows/build-android.yml`** — GitHub Actions workflow that runs on push, builds a signed Android AAB in the cloud (no local Android Studio needed). Uses repository secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`. Artifact is uploaded for download from the Actions tab.
+- **`KEYSTORE_SETUP.md`** — step-by-step guide for generating a signing keystore locally with `keytool`, base64-encoding it, and adding the four required secrets to GitHub.
+- **`docs/privacy-policy.html`** — self-contained, styled privacy policy page (required by Google Play) declaring zero personal data collection, no analytics, no ads. Email placeholder for the user to fill in.
+- **`docs/index.html`** — meta-refresh redirect to the privacy policy (so the GitHub Pages root URL also works).
+- **`docs/README.md`** — instructions for enabling GitHub Pages on `/docs` folder to host the privacy policy URL for free.
+
+### Stripped
+- All "emergent" platform branding removed from `index.html`, `package.json`, `android/app/build.gradle`. App ID/namespace are now neutral; no third-party tracking scripts in HTML.
+
+### Verified
+- Browser smoke screenshot captured post-cleanup: GravShift menu renders correctly with title, PLAY button, instructions, BEST score, sound indicator — no console errors, no "emergent" references visible.
+- `grep -r emergent` against source files returns no matches outside the preview `.env` URL (protected variable).
+
+## Backlog (P2)
+- Settings menu (mute toggle, haptics toggle) — currently controlled via M key only
+- Daily challenge / seeded run mode
+- About / Credits screen
+- Cosmetic skins (color palettes) unlocked at score milestones
