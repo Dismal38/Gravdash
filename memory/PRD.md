@@ -309,3 +309,22 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 - Daily challenge / seeded run mode
 - About / Credits screen
 - Cosmetic skins (color palettes) unlocked at score milestones
+
+
+## Update (2026-02 — session 15, Daily Challenge mode)
+### Added
+- **Seeded RNG (`createSeededRng`, mulberry32)** in `gameEngine.js`. `createInitialState(viewport, seed)` now accepts an optional seed; when provided, the entire level (pipe gaps, flip-pipe placement, orb spawns) is deterministic. All internal `randRange` calls refactored to take `s.rng`.
+- **`getDailySeed()` + `getDailyDateLabel()`** — derive a deterministic seed from the device's local date.
+- **Daily Challenge UI**:
+  - New `★ DAILY CHALLENGE` button on `MenuScreen` with today's date and today's best score displayed beneath it.
+  - `★ DAILY` HUD badge during play (`data-testid="hud-daily-badge"`).
+  - `★ DAILY CHALLENGE · YYYY-MM-DD` header on Game Over screen (`data-testid="gameover-daily-badge"`).
+- **Per-day best score persistence** with key `gravshift_daily_YYYY-MM-DD`. Endless high score and daily best tracked independently.
+- **Mode-aware retry** — pressing RETRY/Space restarts the same mode the player just finished.
+
+### Verified
+- ESLint clean; `yarn build` succeeds
+- Browser smoke test: Menu renders new button + today's date "2026-05-22 · TODAY'S BEST 0000". Clicking Daily Challenge transitions to playing → death → Game Over shows "★ DAILY CHALLENGE · 2026-05-22" badge. 0 console errors.
+
+### Play Store impact
+- **None.** Still offline, still zero data collection. Privacy policy unchanged. Just rebuild + re-upload the AAB via the existing GitHub Actions pipeline.

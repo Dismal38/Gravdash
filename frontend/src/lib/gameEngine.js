@@ -43,14 +43,46 @@ export const COLORS = {
     particleB: "#FF3366",
 };
 
-export function randRange(a, b) {
-    return a + Math.random() * (b - a);
+// mulberry32 — small, fast, well-distributed seeded RNG.
+// Used for the Daily Challenge so every player sees the same level today.
+function createSeededRng(seed) {
+    let a = seed >>> 0;
+    return function rng() {
+        a |= 0;
+        a = (a + 0x6d2b79f5) | 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
 }
 
-export function createInitialState(viewport) {
+export function randRange(rng, a, b) {
+    return a + rng() * (b - a);
+}
+
+/**
+ * Returns the seed for today's Daily Challenge based on the device's local date.
+ * Same date → same seed → identical level layout for everyone playing today.
+ */
+export function getDailySeed() {
+    const d = new Date();
+    return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+export function getDailyDateLabel() {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+export function createInitialState(viewport, seed = null) {
     const { w, h } = viewport;
+    const rng = seed == null ? Math.random : createSeededRng(seed);
     const s = {
         viewport,
+        rng,
         bird: {
             x: Math.min(160, w * 0.28),
             y: h / 2,
@@ -78,8 +110,8 @@ export function spawnPipe(s) {
     const { w, h } = s.viewport;
     const margin = 70;
     const gap = GAME.pipeGap;
-    const gapY = randRange(margin + gap / 2, h - margin - gap / 2);
-    const isFlip = Math.random() < GAME.flipPipeChance;
+    const gapY = randRange(s.rng, margin + gap / 2, h - margin - gap / 2);
+    const isFlip = s.rng() < GAME.flipPipeChance;
     s.pipes.push({
         x: w + 40,
         gapY,
@@ -88,9 +120,9 @@ export function spawnPipe(s) {
         isFlip,
         flipTriggered: false,
     });
-    if (!isFlip && Math.random() < GAME.orbChance) {
+    if (!isFlip && s.rng() < GAME.orbChance) {
         const orbX = w + 40 + GAME.pipeSpacing / 2;
-        const orbY = randRange(margin + 30, h - margin - 30);
+        const orbY = randRange(s.rng, margin + 30, h - margin - 30);
         s.orbs.push({ x: orbX, y: orbY, collected: false, t: 0 });
     }
 }
@@ -102,12 +134,12 @@ export function flap(s) {
         s.particles.push({
             x: s.bird.x - 8,
             y: s.bird.y,
-            vx: -randRange(60, 140),
-            vy: randRange(-50, 50) - s.gravityDir * 30,
+            vx: -randRange(s.rng, 60, 140),
+            vy: randRange(s.rng, -50, 50) - s.gravityDir * 30,
             life: 0.4,
             maxLife: 0.4,
             color: COLORS.particleA,
-            size: randRange(2, 4),
+            size: randRange(s.rng, 2, 4),
         });
     }
 }
@@ -120,7 +152,7 @@ function doGravityFlip(s, source) {
     const baseColor = source === "pipe" ? COLORS.particleB : COLORS.particleA;
     for (let i = 0; i < 24; i++) {
         const ang = (Math.PI * 2 * i) / 24;
-        const sp = randRange(120, 240);
+        const sp = randRange(s.rng, 120, 240);
         s.particles.push({
             x: s.bird.x,
             y: s.bird.y,
@@ -129,7 +161,7 @@ function doGravityFlip(s, source) {
             life: 0.6,
             maxLife: 0.6,
             color: baseColor,
-            size: randRange(2, 4),
+            size: randRange(s.rng, 2, 4),
         });
     }
 }
@@ -141,17 +173,17 @@ function endRun(s) {
     stopMusic();
     s.shake = 0.5;
     for (let i = 0; i < 40; i++) {
-        const ang = randRange(0, Math.PI * 2);
-        const sp = randRange(60, 320);
+        const ang = randRange(s.rng, 0, Math.PI * 2);
+        const sp = randRange(s.rng, 60, 320);
         s.particles.push({
             x: s.bird.x,
             y: s.bird.y,
             vx: Math.cos(ang) * sp,
             vy: Math.sin(ang) * sp,
-            life: randRange(0.5, 1.1),
+            life: randRange(s.rng, 0.5, 1.1),
             maxLife: 1.1,
             color: i % 2 ? COLORS.particleA : COLORS.particleB,
-            size: randRange(2, 5),
+            size: randRange(s.rng, 2, 5),
         });
     }
     s.dead = true;
@@ -435,7 +467,7 @@ export function draw(canvas, s) {
 
     ctx.save();
     if (s.shake > 0) {
-        ctx.translate(randRange(-6, 6) * s.shake, randRange(-6, 6) * s.shake);
+        ctx.translate(randRange(s.rng, -6, 6) * s.shake, randRange(s.rng, -6, 6) * s.shake);
     }
 
     if (s.autoFlipFlash > 0) {

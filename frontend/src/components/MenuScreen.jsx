@@ -1,6 +1,12 @@
 import React from "react";
 
-export default function MenuScreen({ highScore, onPlay }) {
+export default function MenuScreen({
+    highScore,
+    dailyBest,
+    dailyDate,
+    onPlay,
+    onPlayDaily,
+}) {
     return (
         <div
             data-ui-overlay="true"
@@ -36,10 +42,36 @@ export default function MenuScreen({ highScore, onPlay }) {
                 >
                     ▶ PLAY
                 </button>
+
+                <button
+                    type="button"
+                    data-testid="play-daily-button"
+                    onClick={onPlayDaily}
+                    className="btn-ghost"
+                    style={{
+                        fontSize: "0.85rem",
+                        borderColor: "rgba(57, 255, 20, 0.55)",
+                        color: "#39FF14",
+                        textShadow: "0 0 12px rgba(57, 255, 20, 0.55)",
+                    }}
+                >
+                    ★ DAILY CHALLENGE
+                </button>
+
+                <div
+                    className="font-mono text-[10px] uppercase tracking-[0.3em] text-center"
+                    style={{ color: "rgba(244,244,245,0.35)" }}
+                    data-testid="daily-info"
+                >
+                    {dailyDate} · TODAY&apos;S BEST{" "}
+                    <span style={{ color: "#39FF14" }}>
+                        {dailyBest.toString().padStart(4, "0")}
+                    </span>
+                </div>
             </div>
 
             <div
-                className="mt-12 font-mono text-xs uppercase tracking-[0.3em] text-center max-w-md"
+                className="mt-10 font-mono text-xs uppercase tracking-[0.3em] text-center max-w-md"
                 style={{ color: "rgba(244,244,245,0.5)" }}
             >
                 TAP / SPACE: FLAP

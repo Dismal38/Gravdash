@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function HUD({ score, gravityDir }) {
+export default function HUD({ score, gravityDir, mode }) {
     return (
         <>
             <div
@@ -31,6 +31,18 @@ export default function HUD({ score, gravityDir }) {
                     GRAVITY {gravityDir > 0 ? "DOWN" : "UP"}
                 </span>
             </div>
+            {mode === "daily" && (
+                <div
+                    className="absolute top-12 left-4 z-20 font-mono uppercase text-[10px] tracking-[0.3em] pointer-events-none"
+                    data-testid="hud-daily-badge"
+                    style={{
+                        color: "#39FF14",
+                        textShadow: "0 0 8px rgba(57, 255, 20, 0.6)",
+                    }}
+                >
+                    ★ DAILY
+                </div>
+            )}
         </>
     );
 }

@@ -7,6 +7,8 @@ export default function GameOverScreen({
     score,
     highScore,
     isNewHigh,
+    mode,
+    dailyDate,
     playerName,
     setPlayerName,
     onRetry,
@@ -23,6 +25,19 @@ export default function GameOverScreen({
             style={{ background: "rgba(5,5,8,0.85)" }}
         >
             <div className="panel w-full max-w-md p-8 text-center" data-testid="gameover-panel">
+                {mode === "daily" && (
+                    <div
+                        className="mb-4 font-mono uppercase tracking-[0.3em] text-[10px]"
+                        style={{
+                            color: "#39FF14",
+                            textShadow: "0 0 8px rgba(57, 255, 20, 0.5)",
+                        }}
+                        data-testid="gameover-daily-badge"
+                    >
+                        ★ DAILY CHALLENGE · {dailyDate}
+                    </div>
+                )}
+
                 <ScoreDisplay
                     score={score}
                     isNewHigh={isNewHigh}
