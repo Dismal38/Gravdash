@@ -17,7 +17,7 @@ async function waitForFonts() {
             await document.fonts.ready;
         }
     } catch (e) {
-        console.warn("[GRAV-SHIFT shareCard] font wait failed:", e);
+        console.warn("[GRAVDASH shareCard] font wait failed:", e);
     }
 }
 
@@ -42,7 +42,7 @@ export async function buildShareCard({ score, rank, total, isNewHigh, name }) {
     });
 }
 
-export function downloadBlob(blob, filename = "gravshift-score.png") {
+export function downloadBlob(blob, filename = "gravdash-score.png") {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -64,14 +64,14 @@ async function tryCapacitorShare(text) {
         ) {
             const { Share } = await import("@capacitor/share");
             await Share.share({
-                title: "GRAV-SHIFT score",
+                title: "GRAVDASH score",
                 text,
                 dialogTitle: "Share your run",
             });
             return "capacitor-share";
         }
     } catch (e) {
-        console.warn("[GRAV-SHIFT shareCard] capacitor share failed:", e);
+        console.warn("[GRAVDASH shareCard] capacitor share failed:", e);
     }
     return null;
 }
@@ -83,11 +83,11 @@ async function tryWebShareFiles(file, text) {
             navigator.canShare &&
             navigator.canShare({ files: [file] })
         ) {
-            await navigator.share({ files: [file], title: "GRAV-SHIFT score", text });
+            await navigator.share({ files: [file], title: "GRAVDASH score", text });
             return "web-share-files";
         }
     } catch (e) {
-        console.warn("[GRAV-SHIFT shareCard] web file share failed:", e);
+        console.warn("[GRAVDASH shareCard] web file share failed:", e);
     }
     return null;
 }
@@ -95,20 +95,20 @@ async function tryWebShareFiles(file, text) {
 async function tryWebShareText(text) {
     try {
         if (typeof navigator !== "undefined" && navigator.share) {
-            await navigator.share({ title: "GRAV-SHIFT score", text });
+            await navigator.share({ title: "GRAVDASH score", text });
             return "web-share-text";
         }
     } catch (e) {
-        console.warn("[GRAV-SHIFT shareCard] web text share failed:", e);
+        console.warn("[GRAVDASH shareCard] web text share failed:", e);
     }
     return null;
 }
 
 export async function shareCardBlob(blob, { score, rank } = {}) {
-    const text = `I scored ${score} on GRAV-SHIFT${
+    const text = `I scored ${score} on GRAVDASH${
         rank ? ` — global rank #${rank}` : ""
     }. Can you beat it?`;
-    const file = new File([blob], "gravshift-score.png", { type: "image/png" });
+    const file = new File([blob], "gravdash-score.png", { type: "image/png" });
 
     const strategies = [
         () => tryCapacitorShare(text),

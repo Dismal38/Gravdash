@@ -1,4 +1,4 @@
-// Lightweight Web Audio sound engine for GRAV-SHIFT.
+// Lightweight Web Audio sound engine for GRAVDASH.
 // Generates all sounds procedurally, no asset downloads needed.
 
 let ctx = null;
@@ -16,7 +16,7 @@ function ensureCtx() {
         masterGain.gain.value = muted ? 0 : 0.5;
         masterGain.connect(ctx.destination);
     } catch (e) {
-        console.warn("[GRAV-SHIFT audio] context init failed:", e);
+        console.warn("[GRAVDASH audio] context init failed:", e);
         return null;
     }
     return ctx;

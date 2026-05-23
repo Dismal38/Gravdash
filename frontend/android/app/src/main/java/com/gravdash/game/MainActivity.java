@@ -1,4 +1,4 @@
-package com.emergent.gravshift;
+package com.gravdash.game;
 
 import com.getcapacitor.BridgeActivity;
 

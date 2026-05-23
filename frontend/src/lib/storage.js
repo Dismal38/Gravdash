@@ -9,7 +9,7 @@ export function readNumber(key, fallback = 0) {
         const n = parseInt(raw, 10);
         return Number.isFinite(n) ? n : fallback;
     } catch (e) {
-        console.warn("[GRAV-SHIFT storage] read failed:", key, e);
+        console.warn("[GRAVDASH storage] read failed:", key, e);
         return fallback;
     }
 }
@@ -18,7 +18,7 @@ export function readString(key, fallback = "") {
     try {
         return window.localStorage.getItem(key) || fallback;
     } catch (e) {
-        console.warn("[GRAV-SHIFT storage] read failed:", key, e);
+        console.warn("[GRAVDASH storage] read failed:", key, e);
         return fallback;
     }
 }
@@ -27,6 +27,6 @@ export function writeValue(key, value) {
     try {
         window.localStorage.setItem(key, String(value));
     } catch (e) {
-        console.warn("[GRAV-SHIFT storage] write failed:", key, e);
+        console.warn("[GRAVDASH storage] write failed:", key, e);
     }
 }

@@ -1,4 +1,4 @@
-# GRAV-SHIFT Brand Assets
+# GRAVDASH Brand Assets
 
 These are the master Play Store + Android assets, all generated procedurally
 to match the in-game neon retro aesthetic exactly.
@@ -52,7 +52,7 @@ When uploading to the Play Console you'll need:
 
 For the listing description, here's a copy-paste starter:
 
-> **GRAV-SHIFT** — One tap. Three gravity flips. One run.
+> **GRAVDASH** — One tap. Three gravity flips. One run.
 >
 > A pure-skill arcade reflex game with a twist: gravity isn't constant.
 > Catch green orbs to flip it. Pass through red pipes to flip it. And every

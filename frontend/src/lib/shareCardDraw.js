@@ -1,4 +1,4 @@
-// Drawing helpers for the 1080x1080 GRAV-SHIFT share card.
+// Drawing helpers for the 1080x1080 GRAVDASH share card.
 // Each helper takes a 2D context and the geometry it needs.
 
 export const SHARE_CARD = { W: 1080, H: 1080 };
@@ -82,7 +82,7 @@ export function drawHeader(ctx, panel, name) {
     ctx.shadowBlur = 18;
     ctx.font = '700 28px "Azeret Mono", monospace';
     ctx.textAlign = "left";
-    ctx.fillText("● GRAV-SHIFT", px + 50, py + 70);
+    ctx.fillText("● GRAVDASH", px + 50, py + 70);
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = "rgba(244, 244, 245, 0.55)";

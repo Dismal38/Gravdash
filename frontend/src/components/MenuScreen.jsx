@@ -23,7 +23,7 @@ export default function MenuScreen({
                 }}
                 data-testid="game-title"
             >
-                GRAV-SHIFT
+                GRAVDASH
             </div>
             <div
                 className="mt-2 font-mono uppercase tracking-[0.4em] text-xs"

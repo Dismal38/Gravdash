@@ -328,3 +328,34 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 
 ### Play Store impact
 - **None.** Still offline, still zero data collection. Privacy policy unchanged. Just rebuild + re-upload the AAB via the existing GitHub Actions pipeline.
+
+
+## Update (2026-02 — session 16, REBRAND to GravDash + Concept 2 icon + bug fix)
+### Rebrand: GRAV-SHIFT → GRAVDASH
+- Reason: discovered existing "GravShift" app on Google Play (`com.gamingarcade.gravshift`) with near-identical neon-spaceship-gravity pitch. Would have caused name-collision rejection or trademark complaint post-launch.
+- Verified availability: "GravDash" has no exact match on Google Play (closest is "Gravity Dash" — separate word, different brand).
+- Renamed across 24 files in one sweep: src/components, src/lib, src/hooks, public/index.html, capacitor.config.json, android build.gradle, strings.xml, MainActivity.java (also moved package path `com/emergent/gravshift/` → `com/gravdash/game/`), assets/capacitor.config.json, .github workflow, /docs privacy policy, /resources listing copy, /scripts Python helpers, root markdown guides.
+- New identifiers:
+  - **App name (user-facing)**: GRAVDASH
+  - **Android applicationId/namespace**: `com.gravdash.game`
+  - **LocalStorage keys**: `gravdash_local_high`, `gravdash_name`, `gravdash_daily_YYYY-MM-DD`
+- Verified: ESLint clean, `yarn build` succeeds, browser smoke test confirms `<title>GRAVDASH</title>` + on-screen menu title "GRAVDASH" + Daily Challenge still functional + 0 console errors.
+
+### New app icon (Concept 2 — Inverted World)
+- Replaced the generic yellow-triangle icon with the magenta/cyan split-horizon design featuring a mirrored yellow chevron.
+- 26 files written across all 6 Android density buckets (ldpi → xxxhdpi): ic_launcher, ic_launcher_round, ic_launcher_foreground, and ic_launcher_background. Plus 512×512 listing icon at `/app/resources/icon.png`.
+- Source PNGs preserved in `/app/resources/icon_concepts/` for future re-export. Script: `/app/scripts/apply_icon_concept_2.py`.
+
+### Bug fix: stale canvas on "Quit to Menu"
+- Symptom: clicking MENU after game-over showed leftover dead-game scene (pipes on right edge, dead bird in corner) bleeding through the menu overlay.
+- Root cause: render loop in `useGameLoop.js` keeps drawing whatever sits in `stateRef.current` every frame. Returning to menu only flipped phase but left the dead state behind.
+- Fix: in `Game.jsx` → `quitToMenu` now sets `stateRef.current = null`. `engineDraw` already handles null state cleanly (paints background grid only).
+
+### Play Store impact
+- **None.** Still offline. Privacy policy already used the new "GravDash" name (auto-updated during rename). Same upload workflow: GitHub Push → Actions rebuilds AAB → upload to Play Console.
+
+### Backlog (P2)
+- Cyan/magenta thruster trail behind the ship (code-only, ~10 min, no AI generation needed) — would visually tie in-game look to the new icon palette
+- Settings menu (touch-friendly mute/haptics toggles)
+- About / Credits screen
+- Score-milestone unlockable ship skins

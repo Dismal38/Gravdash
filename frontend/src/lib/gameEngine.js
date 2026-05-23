@@ -1,4 +1,4 @@
-// Pure game engine: physics, spawning, and rendering for GRAV-SHIFT.
+// Pure game engine: physics, spawning, and rendering for GRAVDASH.
 // No React. No DOM lifecycle. Just functions over a state object.
 
 import {

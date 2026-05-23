@@ -1,6 +1,6 @@
-# GRAV-SHIFT — Play Store Build Guide
+# GRAVDASH — Play Store Build Guide
 
-This document walks you through turning the GRAV-SHIFT web build into a signed
+This document walks you through turning the GRAVDASH web build into a signed
 Android **AAB** ready to upload to the Google Play Console at the **$0.99**
 price point.
 
@@ -14,8 +14,8 @@ The Capacitor project is already initialized for you:
 ```
 
 App identity (already configured):
-- **App ID**: `com.emergent.gravshift`  ← change to your studio's reverse-domain before publishing
-- **App Name**: `GRAV-SHIFT`
+- **App ID**: `com.gravdash.game`  ← change to your studio's reverse-domain before publishing
+- **App Name**: `GRAVDASH`
 - **Background color**: `#050508` (matches the in-game void)
 
 ---
@@ -45,8 +45,8 @@ yarn install
 
 ## 2. Change the App ID to your own (recommended)
 
-In `frontend/capacitor.config.json` change `appId` from `com.emergent.gravshift`
-to your reverse-domain (e.g. `com.yourstudio.gravshift`). Then re-sync:
+In `frontend/capacitor.config.json` change `appId` from `com.gravdash.game`
+to your reverse-domain (e.g. `com.yourstudio.gravdash`). Then re-sync:
 
 ```bash
 yarn build
@@ -63,7 +63,7 @@ can refactor this for you (Refactor → Rename Package).
 
 **🎮 OFFLINE BUILD — SKIP THIS SECTION!**
 
-GRAV-SHIFT now ships as a 100% offline game. There is **no backend to deploy**.
+GRAVDASH now ships as a 100% offline game. There is **no backend to deploy**.
 The React build is bundled directly into the Android APK by Capacitor and
 requires zero internet connection to play. Your high score and player name
 are saved locally on the device.
@@ -139,7 +139,7 @@ In Android Studio:
    - Full description (mention the three flip mechanics + global leaderboard)
    - Screenshots (use the in-game screenshots + the **share card** the game
      itself can generate from any high score!)
-   - Feature graphic (1024×500) — neon GRAV-SHIFT logo on void black
+   - Feature graphic (1024×500) — neon GRAVDASH logo on void black
    - Content rating questionnaire
    - Data safety form (only data collected: player name + score, sent to your
      own backend)

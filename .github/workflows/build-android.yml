@@ -97,7 +97,7 @@ jobs:
             - name: Upload AAB artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: gravshift-release-${{ github.run_number }}.aab
+                  name: gravdash-release-${{ github.run_number }}.aab
                   path: frontend/android/${{ steps.aab.outputs.path }}
                   retention-days: 90
                   if-no-files-found: error

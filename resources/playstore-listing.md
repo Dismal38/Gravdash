@@ -1,4 +1,4 @@
-# GRAV-SHIFT — Play Store Listing Copy
+# GRAVDASH — Play Store Listing Copy
 
 All copy below is pre-counted to fit Google Play Console field limits.
 Just copy + paste into the matching Console field.
@@ -8,14 +8,14 @@ Just copy + paste into the matching Console field.
 ## App name (max 30 chars)
 
 ```
-GRAV-SHIFT: One Tap Arcade
+GRAVDASH: One Tap Arcade
 ```
 **26 / 30** — keyword-rich, mentions core mechanic + genre.
 
 ### Alternates if you prefer
-- `GRAV-SHIFT — Flip Gravity` (25 chars)
-- `GRAV-SHIFT: Neon Arcade` (23 chars)
-- `GRAV-SHIFT` (10 chars — purest brand play)
+- `GRAVDASH — Flip Gravity` (25 chars)
+- `GRAVDASH: Neon Arcade` (23 chars)
+- `GRAVDASH` (10 chars — purest brand play)
 
 ---
 
@@ -35,12 +35,12 @@ One tap. Three ways to flip gravity. Pure-skill arcade. No ads. No internet.
 ## Full description (max 4000 chars)
 
 ```
-GRAV-SHIFT is a pure-skill, one-tap arcade reflex game with a twist:
+GRAVDASH is a pure-skill, one-tap arcade reflex game with a twist:
 gravity isn't constant.
 
 Tap to flap. Survive the pipes. Climb the global leaderboard.
 But every few seconds the world tries to throw you off — and that's
-where GRAV-SHIFT earns its name.
+where GRAVDASH earns its name.
 
 ═══════════════════════
 ⚡ THREE WAYS TO FLIP GRAVITY ⚡
@@ -95,11 +95,11 @@ indie arcade games should be.
 ═══════════════════════
 
 If you grew up playing Flappy Bird, Geometry Dash, Color Switch, or
-any arcade reflex game where one tap = one chance — GRAV-SHIFT is
+any arcade reflex game where one tap = one chance — GRAVDASH is
 that, with a fresh gravity-flip twist that keeps every run unpredictable.
 
 If you've gotten tired of free-to-play games shoving ads and microtrans-
-actions in your face — GRAV-SHIFT is the 99¢ palette cleanser.
+actions in your face — GRAVDASH is the 99¢ palette cleanser.
 
 ═══════════════════════
 🏆 RECORDS TO BEAT 🏆
@@ -113,7 +113,7 @@ actions in your face — GRAV-SHIFT is the 99¢ palette cleanser.
 
 Tap. Flip. Survive. Repeat.
 
-GRAV-SHIFT.
+GRAVDASH.
 ```
 **~2,400 / 4,000** — comfortable headroom for tweaks. Uses heavy emoji
 section breaks for scanability (proven to lift Play Store conversion).
@@ -148,10 +148,10 @@ your-email@yourstudio.com
 
 ### Privacy policy URL (REQUIRED for paid apps)
 ```
-https://yoursite.com/gravshift/privacy
+https://yoursite.com/gravdash/privacy
 ```
 Minimum text the policy must contain:
-> GRAV-SHIFT is a 100% offline game. We do not collect, store, or transmit
+> GRAVDASH is a 100% offline game. We do not collect, store, or transmit
 > any personal data. The app does not connect to any server. Your high score
 > and player name (optional, used only for personalizing share cards) are
 > stored only on your device.
@@ -163,7 +163,7 @@ Minimum text the policy must contain:
 - **Data shared with third parties:** NO
 
 ### Content rating
-- Run the questionnaire honestly. GRAV-SHIFT will rate **Everyone** on
+- Run the questionnaire honestly. GRAVDASH will rate **Everyone** on
   Play Store + IARC (no violence, no chat, no UGC, no ads).
 
 ### Pricing

@@ -19,7 +19,7 @@ export default function ShareSection({ score, isNewHigh, globalRank, playerName 
             });
             if (!blob) throw new Error("blob generation failed");
             if (mode === "download") {
-                downloadBlob(blob, `gravshift-${score}.png`);
+                downloadBlob(blob, `gravdash-${score}.png`);
                 setStatus("✓ SAVED");
             } else {
                 const res = await shareCardBlob(blob, {
@@ -30,7 +30,7 @@ export default function ShareSection({ score, isNewHigh, globalRank, playerName 
                 setStatus(res.method === "download" ? "✓ DOWNLOADED" : "✓ SHARED");
             }
         } catch (e) {
-            console.warn("[GRAV-SHIFT] share/download failed:", e);
+            console.warn("[GRAVDASH] share/download failed:", e);
             setStatus("⚠ COULD NOT SHARE");
         } finally {
             setSharing(false);

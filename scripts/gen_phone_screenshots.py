@@ -1,6 +1,6 @@
 """
 Generate Play Store phone screenshots (1080x2400 portrait, 9:20 aspect).
-Both screenshots are pixel-accurate recreations of the GRAV-SHIFT UI/canvas.
+Both screenshots are pixel-accurate recreations of the GRAVDASH UI/canvas.
 """
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import math
@@ -188,7 +188,7 @@ def make_phone_1():
     neon_text(img, "SOUND ON", (W - 280, 70), 36, GREY_DIM, glow_radius=4, bold=False)
 
     # Title
-    title = "GRAV-SHIFT"
+    title = "GRAVDASH"
     tw, _ = text_size(title, 220)
     chroma_title(img, title, ((W - tw) // 2, 760), 220, glow_radius=22)
 
@@ -324,7 +324,7 @@ def make_phone_2():
     draw_orb(img, x=540, y=1200, t=0.5)
 
     # ---- Watermark / hint at bottom ----
-    hint = "GRAV-SHIFT  ·  ONE TAP  ·  FLIP GRAVITY"
+    hint = "GRAVDASH  ·  ONE TAP  ·  FLIP GRAVITY"
     hw, _ = text_size(hint, 32, bold=False)
     neon_text(img, hint, ((W - hw) // 2, H - 100), 32, GREY_DIM, glow_radius=3, bold=False)
 

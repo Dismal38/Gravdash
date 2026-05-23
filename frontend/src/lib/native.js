@@ -15,7 +15,7 @@ async function ensureHaptics() {
             HapticsMod = await import("@capacitor/haptics");
         }
     } catch (e) {
-        console.warn("[GRAV-SHIFT native] haptics import failed:", e);
+        console.warn("[GRAVDASH native] haptics import failed:", e);
         HapticsMod = null;
     }
     return HapticsMod;
@@ -27,7 +27,7 @@ async function impact(style) {
     try {
         await m.Haptics.impact({ style });
     } catch (e) {
-        console.warn("[GRAV-SHIFT native] haptics impact failed:", e);
+        console.warn("[GRAVDASH native] haptics impact failed:", e);
     }
 }
 

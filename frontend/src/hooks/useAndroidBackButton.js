@@ -27,7 +27,7 @@ async function getAppMod() {
             AppMod = await import("@capacitor/app");
         }
     } catch (e) {
-        console.warn("[GRAV-SHIFT back-button] @capacitor/app import failed:", e);
+        console.warn("[GRAVDASH back-button] @capacitor/app import failed:", e);
         AppMod = null;
     }
     return AppMod;
@@ -40,7 +40,7 @@ async function tryExitApp() {
         await mod.App.exitApp();
         return true;
     } catch (e) {
-        console.warn("[GRAV-SHIFT back-button] exitApp failed:", e);
+        console.warn("[GRAVDASH back-button] exitApp failed:", e);
         return false;
     }
 }
@@ -89,7 +89,7 @@ export function useAndroidBackButton({ phaseRef, onPause, onResume, onMenu, onEx
             try {
                 listenerHandle = await mod.App.addListener("backButton", route);
             } catch (e) {
-                console.warn("[GRAV-SHIFT back-button] addListener failed:", e);
+                console.warn("[GRAVDASH back-button] addListener failed:", e);
             }
         })();
 

@@ -1,5 +1,5 @@
 """
-Generate GRAV-SHIFT brand assets for the Play Store + Android.
+Generate GRAVDASH brand assets for the Play Store + Android.
 
 Outputs to /app/resources/:
   - icon.png         1024x1024  (launcher icon, masked-friendly)
@@ -133,7 +133,7 @@ def make_splash():
     draw_grid(d, W, W, 100, CYAN, alpha=18)
 
     # Big neon title
-    title = "GRAV-SHIFT"
+    title = "GRAVDASH"
     tw, th = text_size(title, 220)
     title_x = (W - tw) // 2
     title_y = W // 2 - 200
@@ -205,7 +205,7 @@ def make_feature():
 
 
 if __name__ == "__main__":
-    print("Generating GRAV-SHIFT brand assets…")
+    print("Generating GRAVDASH brand assets…")
     make_icon()
     make_splash()
     make_feature()

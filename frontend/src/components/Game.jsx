@@ -16,9 +16,9 @@ import { useGameInput } from "../hooks/useGameInput";
 import { useCanvasResize } from "../hooks/useCanvasResize";
 import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
 
-const HIGH_SCORE_KEY = "gravshift_local_high";
-const PLAYER_NAME_KEY = "gravshift_name";
-const DAILY_BEST_KEY_PREFIX = "gravshift_daily_";
+const HIGH_SCORE_KEY = "gravdash_local_high";
+const PLAYER_NAME_KEY = "gravdash_name";
+const DAILY_BEST_KEY_PREFIX = "gravdash_daily_";
 
 function dailyBestKey(dateLabel) {
     return `${DAILY_BEST_KEY_PREFIX}${dateLabel}`;

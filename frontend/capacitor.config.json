@@ -1,6 +1,6 @@
 {
-    "appId": "com.gravshift.game",
-    "appName": "GRAV-SHIFT",
+    "appId": "com.gravdash.game",
+    "appName": "GRAVDASH",
     "webDir": "build",
     "bundledWebRuntime": false,
     "backgroundColor": "#050508",

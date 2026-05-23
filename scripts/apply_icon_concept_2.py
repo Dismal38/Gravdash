@@ -1,5 +1,5 @@
 """
-Apply Concept 2 (Inverted World) as the GravShift Android app icon.
+Apply Concept 2 (Inverted World) as the GravDash Android app icon.
 Resizes the source 1024x1024 to every required Android density bucket
 and writes both legacy (ic_launcher) and adaptive (foreground/background) layers.
 """

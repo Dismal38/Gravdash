@@ -1,11 +1,11 @@
-# GRAV-SHIFT — Keystore + GitHub Actions Setup
+# GRAVDASH — Keystore + GitHub Actions Setup
 
 This is the **one and only** time you need to do anything "developery" outside
 your browser. ~10 minutes total. After this, every Play Store update is a
 single git push and a download.
 
 > ⚠️ **About the keystore:** It's a single file that proves *you* are the
-> publisher of the GRAV-SHIFT app on Play Store. If you lose it, you can
+> publisher of the GRAVDASH app on Play Store. If you lose it, you can
 > never publish an update — Google will treat your next signed AAB as a
 > different app. **Back it up in 2-3 places** (password manager + cloud
 > drive + USB stick is a good combo).
@@ -38,8 +38,8 @@ In any terminal:
 
 ```bash
 keytool -genkey -v \
-  -keystore gravshift-release.keystore \
-  -alias gravshift \
+  -keystore gravdash-release.keystore \
+  -alias gravdash \
   -keyalg RSA -keysize 2048 \
   -validity 10000 \
   -storetype PKCS12
@@ -48,7 +48,7 @@ keytool -genkey -v \
 It will prompt for:
 
 1. **A keystore password** — invent a strong one. **Save it.** *(suggestion:
-   open your password manager, create a new entry "GRAV-SHIFT Keystore",
+   open your password manager, create a new entry "GRAVDASH Keystore",
    stick the password there)*
 2. **A key password** — for simplicity, use the *same* password as #1
    (you can hit Enter when it asks if you want to reuse the store password)
@@ -58,7 +58,7 @@ It will prompt for:
    - Organization: *(your name/studio)*
    - City / State / Country: *(your city / state / 2-letter country code)*
 
-You'll get a file: **`gravshift-release.keystore`** in your current directory.
+You'll get a file: **`gravdash-release.keystore`** in your current directory.
 
 ### Back it up RIGHT NOW
 
@@ -78,8 +78,8 @@ GitHub Secrets can only store text, so we encode the binary keystore as text:
 
 | OS | Command |
 |---|---|
-| **Mac / Linux** | `base64 -i gravshift-release.keystore -o keystore.base64` |
-| **Windows (PowerShell)** | `[Convert]::ToBase64String([IO.File]::ReadAllBytes("gravshift-release.keystore")) > keystore.base64` |
+| **Mac / Linux** | `base64 -i gravdash-release.keystore -o keystore.base64` |
+| **Windows (PowerShell)** | `[Convert]::ToBase64String([IO.File]::ReadAllBytes("gravdash-release.keystore")) > keystore.base64` |
 
 Open `keystore.base64` in any text editor (Notepad / TextEdit / VS Code).
 You'll see one big block of letters and numbers. **Copy all of it** —
@@ -98,9 +98,9 @@ If you'd rather do it manually:
 cd /app
 git init -b main
 git add .
-git commit -m "GRAV-SHIFT initial commit"
-# Create an empty repo at https://github.com/new (call it 'gravshift')
-git remote add origin https://github.com/YOUR_USERNAME/gravshift.git
+git commit -m "GRAVDASH initial commit"
+# Create an empty repo at https://github.com/new (call it 'gravdash')
+git remote add origin https://github.com/YOUR_USERNAME/gravdash.git
 git push -u origin main
 ```
 
@@ -121,7 +121,7 @@ In your repo on GitHub:
 |---|---|
 | `RELEASE_KEYSTORE_BASE64` | The huge base64 blob you copied in Step 3 |
 | `KEYSTORE_PASSWORD` | The keystore password from Step 2 |
-| `KEY_ALIAS` | `gravshift` (the alias from the keytool command) |
+| `KEY_ALIAS` | `gravdash` (the alias from the keytool command) |
 | `KEY_PASSWORD` | Same as `KEYSTORE_PASSWORD` (since you reused it in Step 2) |
 
 GitHub never displays these values back to you after saving — that's by
@@ -136,7 +136,7 @@ design. You'll only ever need to enter them again if you rotate them.
 3. Click **Run workflow** → green button **Run workflow**
 4. Wait ~5-8 minutes (you'll see live logs)
 5. When it finishes with a green ✅, scroll down to **"Artifacts"** and
-   download `gravshift-release-1.aab`
+   download `gravdash-release-1.aab`
 
 You now have a Play-Store-uploadable signed AAB on your laptop.
 
@@ -180,7 +180,7 @@ Then upload the new AAB to Play Console → **Production → Create new release*
 | Symptom | Fix |
 |---|---|
 | Workflow fails with "Keystore was tampered with" | `KEYSTORE_PASSWORD` doesn't match what you used in keytool. Re-check the secret. |
-| Workflow fails with "Failed to read key" | `KEY_ALIAS` doesn't match. Should be `gravshift` (or whatever you used after `-alias` in Step 2). |
+| Workflow fails with "Failed to read key" | `KEY_ALIAS` doesn't match. Should be `gravdash` (or whatever you used after `-alias` in Step 2). |
 | Workflow runs forever on Gradle step | First build is slow (~6-8 min). Subsequent builds cache and run in 2-3 min. Be patient. |
 | `keytool` command not found | Java isn't installed or not on PATH. On Windows, restart your terminal after installing. |
 | Lost the keystore | You can NOT recover this. Generate a new one, but you'll have to publish as a NEW app on Play Store. |
