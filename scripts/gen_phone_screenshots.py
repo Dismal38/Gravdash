@@ -165,6 +165,33 @@ def draw_particles(canvas, cx, cy, n=10, color=CYAN):
     canvas.alpha_composite(layer)
 
 
+def draw_thruster_trail(canvas, ship_x, ship_y):
+    """The new cyan/magenta two-tone thruster trail trailing behind the ship.
+    Recreates the in-game emitThrusterParticle visual (~20 live particles)."""
+    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    import random
+    random.seed(7)
+    # 20 particles spaced backward from the ship, fading with distance
+    for i in range(22):
+        # Each particle is "older" the further left it is
+        age = (i + 1) / 22.0  # 0..1
+        # x: trailing left from the ship in an arc that matches the recent flight path
+        px = ship_x - 30 - (age * 220) + random.randint(-6, 6)
+        # y: curve upward slightly (ship was flapping up just before)
+        py = ship_y + (age * 30) + random.randint(-8, 8)
+        # Alternate cyan/magenta per particle
+        color = CYAN if i % 2 == 0 else CORAL
+        # Size shrinks with age
+        r = max(2, int(5 - age * 4))
+        # Alpha fades with age
+        a = int(255 * (1.0 - age * 0.85))
+        d.ellipse([px - r, py - r, px + r, py + r], fill=color + (a,))
+    glow = layer.filter(ImageFilter.GaussianBlur(6))
+    canvas.alpha_composite(glow)
+    canvas.alpha_composite(layer)
+
+
 def draw_scanlines(canvas, alpha=30):
     layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
@@ -219,27 +246,34 @@ def make_phone_1():
     img.alpha_composite(tri_layer)
     neon_text(img, "PLAY", (bx + 165, by + 40), 56, CYAN, glow_radius=8)
 
-    # LEADERBOARD button
+    # DAILY CHALLENGE button (replaces removed Leaderboard button)
     by2 = 1360
-    bw2, bh2 = 460, 100
+    bw2, bh2 = 540, 100
     bx2 = (W - bw2) // 2
     glow2 = Image.new("RGBA", img.size, (0, 0, 0, 0))
     gd2 = ImageDraw.Draw(glow2)
-    gd2.rectangle([bx2, by2, bx2 + bw2, by2 + bh2], outline=CORAL + (255,), width=3)
+    gd2.rectangle([bx2, by2, bx2 + bw2, by2 + bh2], outline=GREEN + (255,), width=3)
     glow2_blur = glow2.filter(ImageFilter.GaussianBlur(10))
     img.alpha_composite(glow2_blur)
     img.alpha_composite(glow2)
-    # Diamond icon (drawn as polygon)
-    dia_layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    dld = ImageDraw.Draw(dia_layer)
-    dcx, dcy = bx2 + 60, by2 + 50
-    dld.polygon(
-        [(dcx, dcy - 18), (dcx + 18, dcy), (dcx, dcy + 18), (dcx - 18, dcy)],
-        fill=CORAL + (255,),
-    )
-    img.alpha_composite(dia_layer.filter(ImageFilter.GaussianBlur(6)))
-    img.alpha_composite(dia_layer)
-    neon_text(img, "LEADERBOARD", (bx2 + 100, by2 + 30), 44, CORAL, glow_radius=6)
+    # Star icon (5-point star polygon)
+    star_layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    sld = ImageDraw.Draw(star_layer)
+    scx, scy = bx2 + 60, by2 + 50
+    star_pts = []
+    for i in range(10):
+        ang = -math.pi / 2 + i * math.pi / 5
+        r = 22 if i % 2 == 0 else 9
+        star_pts.append((scx + math.cos(ang) * r, scy + math.sin(ang) * r))
+    sld.polygon(star_pts, fill=GREEN + (255,))
+    img.alpha_composite(star_layer.filter(ImageFilter.GaussianBlur(6)))
+    img.alpha_composite(star_layer)
+    neon_text(img, "DAILY CHALLENGE", (bx2 + 100, by2 + 30), 42, GREEN, glow_radius=6)
+
+    # Today's date + best (matches in-game menu)
+    daily_info = "2026-02-22 · TODAY'S BEST 0023"
+    diw, _ = text_size(daily_info, 26, bold=False)
+    neon_text(img, daily_info, ((W - diw) // 2, 1490), 26, GREY_DIM, glow_radius=2, bold=False)
 
     # Controls hint (3 lines, color-coded keywords)
     hint_y = 1640
@@ -317,7 +351,7 @@ def make_phone_2():
 
     # ---- Ship: just past pipe 1, banking up slightly ----
     ship_x, ship_y = 320, 1080
-    draw_particles(img, ship_x - 50, ship_y, n=14, color=CYAN)
+    draw_thruster_trail(img, ship_x, ship_y)
     draw_ship(img, ship_x, ship_y, size=44, rotation=-0.25)
 
     # ---- Orb between pipes 1 and 2 ----
