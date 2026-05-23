@@ -102,8 +102,52 @@ export function sfxGameOver() {
     });
 }
 
-// Chiptune-ish loop: simple bass + arpeggio
-export function startMusic() {
+// Chiptune-ish loop: simple bass + arpeggio.
+// If /music/loop.mp3 exists (bundled royalty-free track), we play that instead
+// — sounds dramatically better and matches the premium feel of a paid game.
+const MUSIC_URL = "/music/loop.mp3";
+let musicMode = null; // "mp3" | "procedural" | null
+let mp3Element = null;
+let mp3Probed = false;
+let mp3Available = false;
+
+function probeMp3Once() {
+    if (mp3Probed) return Promise.resolve(mp3Available);
+    mp3Probed = true;
+    return fetch(MUSIC_URL, { method: "HEAD" })
+        .then((r) => {
+            mp3Available = r.ok;
+            return mp3Available;
+        })
+        .catch(() => {
+            mp3Available = false;
+            return false;
+        });
+}
+
+function startMusicMp3() {
+    const c = ensureCtx();
+    if (!c) return;
+    if (!mp3Element) {
+        mp3Element = new Audio(MUSIC_URL);
+        mp3Element.loop = true;
+        mp3Element.preload = "auto";
+        const src = c.createMediaElementSource(mp3Element);
+        const g = c.createGain();
+        g.gain.value = 0.55;
+        src.connect(g);
+        g.connect(masterGain);
+        mp3Element._gainNode = g;
+    }
+    mp3Element.currentTime = 0;
+    const playPromise = mp3Element.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+    }
+    musicMode = "mp3";
+}
+
+function startMusicProcedural() {
     const c = ensureCtx();
     if (!c) return;
     if (musicNodes) return;
@@ -147,16 +191,38 @@ export function startMusic() {
     }, 200);
 
     musicNodes = { bass, lead, musicGain, interval };
+    musicMode = "procedural";
+}
+
+export function startMusic() {
+    const c = ensureCtx();
+    if (!c) return;
+    if (musicMode) return; // already playing
+    // Probe once, then route accordingly. Falls back to procedural if no MP3 bundled.
+    probeMp3Once().then((hasMp3) => {
+        if (musicMode) return; // user may have stopped in the meantime
+        if (hasMp3) startMusicMp3();
+        else startMusicProcedural();
+    });
 }
 
 export function stopMusic() {
-    if (!musicNodes) return;
-    try {
-        clearInterval(musicNodes.interval);
-        musicNodes.bass.stop();
-        musicNodes.lead.stop();
-    } catch (e) {
-        /* noop */
+    if (musicMode === "mp3" && mp3Element) {
+        try {
+            mp3Element.pause();
+        } catch (e) {
+            /* noop */
+        }
     }
-    musicNodes = null;
+    if (musicNodes) {
+        try {
+            clearInterval(musicNodes.interval);
+            musicNodes.bass.stop();
+            musicNodes.lead.stop();
+        } catch (e) {
+            /* noop */
+        }
+        musicNodes = null;
+    }
+    musicMode = null;
 }

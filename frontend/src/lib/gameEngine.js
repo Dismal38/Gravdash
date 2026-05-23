@@ -454,9 +454,24 @@ function drawBird(ctx, b, gravityDir) {
     ctx.closePath();
     ctx.fill();
 
+    // Eye — bigger, two-tone, shifts dramatically with gravity flip for personality.
+    // White sclera + dark pupil + tiny highlight = reads as a "face" even at 14px.
+    const eyeX = 4;
+    const eyeY = -5 * gravityDir;   // larger vertical shift on flip
+    // White sclera
+    ctx.fillStyle = "#F4F4F5";
+    ctx.beginPath();
+    ctx.arc(eyeX, eyeY, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Dark pupil
     ctx.fillStyle = "#050508";
     ctx.beginPath();
-    ctx.arc(4, -3 * gravityDir, 2.5, 0, Math.PI * 2);
+    ctx.arc(eyeX + 0.6, eyeY, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    // Specular highlight (gives it life)
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
+    ctx.beginPath();
+    ctx.arc(eyeX + 1.4, eyeY - 1, 1.0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 }

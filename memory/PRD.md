@@ -373,3 +373,25 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 
 ### Play Store impact
 - **None.** Pure visual polish.
+
+
+## Update (2026-02 — session 18, bird redesign + music system + screenshot refresh)
+### Bird eye redesign (gameEngine.js → drawBird)
+- Replaced the 2.5px dark dot with a **two-tone expressive eye**: white sclera (4.2px) + dark pupil (2.6px) + 1px specular highlight. Eye position shifts more dramatically with gravity flip (offset went from `-3*gravityDir` → `-5*gravityDir`). Gives the ship visible "personality" without sacrificing collision readability.
+
+### Music system refactor (audio.js)
+- Added MP3 background-track support with graceful fallback to procedural chiptune.
+- On `startMusic()`, the engine does a one-time `HEAD` request to `/music/loop.mp3`. If present, an `HTMLAudioElement` is piped through the existing Web Audio master gain (mute toggle still works). If missing or fails, the original procedural square+triangle wave loop plays as before.
+- New helper: `/app/frontend/public/music/README.md` documents how to drop in a royalty-free synthwave/retro-arcade MP3 from Pixabay/OpenGameArt/FreePD. No code changes required from the user.
+
+### Play Store screenshots regenerated
+- Removed stale `LEADERBOARD` button from `phone-1.png` (Play Store compliance — screenshots must reflect live app). Replaced with green `★ DAILY CHALLENGE` button + today's-date + today's-best line.
+- Updated `phone-2.png` gameplay shot with the new cyan/magenta thruster trail visible behind the ship.
+- Both saved to `/app/resources/phone-{1,2}.png` at 1080×2400 (Play Store phone-portrait spec).
+
+### Verified
+- ESLint clean across modified files
+- Browser smoke test: game loads, ship flies, thruster trail visible, mute toggle still functional, 0 console errors. Procedural fallback active until user drops in `loop.mp3`.
+
+### Play Store impact
+- **None.** All offline. Privacy policy unchanged. Same upload workflow.
