@@ -276,6 +276,24 @@ function tickParticles(s, dt) {
     s.particles = s.particles.filter((p) => p.life > 0);
 }
 
+// Emits a small cyan/magenta particle behind the ship every frame.
+// Particles drift left and fade quickly, creating a continuous trail.
+// Color alternates each frame so the trail reads as the icon's two-tone palette.
+function emitThrusterParticle(s) {
+    const useCyan = Math.floor(s.timeSec * 30) % 2 === 0;
+    const color = useCyan ? COLORS.particleA : COLORS.particleB;
+    s.particles.push({
+        x: s.bird.x - GAME.birdRadius - 2,
+        y: s.bird.y + randRange(s.rng, -3, 3),
+        vx: -randRange(s.rng, 90, 150),
+        vy: randRange(s.rng, -25, 25),
+        life: 0.32,
+        maxLife: 0.32,
+        color,
+        size: randRange(s.rng, 1.6, 2.8),
+    });
+}
+
 function tickEffectTimers(s, dt) {
     if (s.shake > 0) s.shake = Math.max(0, s.shake - dt);
     if (s.autoFlipFlash > 0) s.autoFlipFlash = Math.max(0, s.autoFlipFlash - dt);
@@ -298,6 +316,7 @@ export function step(s, dt, callbacks = {}) {
     }
 
     applyBirdPhysics(s, dt);
+    emitThrusterParticle(s);
 
     if (birdHitsBoundary(s)) {
         endRun(s);

@@ -359,3 +359,17 @@ Per user choice "ship offline-only for $0", the global leaderboard was stripped 
 - Settings menu (touch-friendly mute/haptics toggles)
 - About / Credits screen
 - Score-milestone unlockable ship skins
+
+
+## Update (2026-02 — session 17, thruster trail polish)
+### Added
+- **`emitThrusterParticle(s)`** in `gameEngine.js`. Called once per frame inside `step()` (right after `applyBirdPhysics`). Spawns a small particle behind the ship that drifts left and fades in 0.32s.
+- Color **alternates cyan (#00F0FF) ↔ magenta (#FF3366) per frame** — same palette as the GravDash app icon, visually tying the in-game ship to the launcher icon.
+- Uses the seeded RNG (`s.rng`) so Daily Challenge runs remain deterministic even with the new visual.
+- ~60 particles/sec spawned, ~20 live at once with 0.32s lifetime. Existing cleanup filter handles them — zero perf impact.
+
+### Verified
+- ESLint clean; live in-game screenshot shows the two-tone trail emitting cleanly behind the ship through a flap arc; 0 console errors.
+
+### Play Store impact
+- **None.** Pure visual polish.
