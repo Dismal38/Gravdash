@@ -50,8 +50,16 @@ jobs:
             - name: Decode keystore from secret
               working-directory: frontend/android/app
               run: |
-                  echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
-                  ls -lh release.keystore
+                  # Strip any whitespace/newlines that may have crept in during
+                  # mobile copy-paste into GitHub Secrets, then decode.
+                  echo "${{ secrets.KEYSTORE_BASE64 }}" | tr -d '[:space:]' | base64 -d > release.keystore
+                  # Sanity check — fail loudly if decoded output is empty or tiny
+                  SIZE=$(wc -c < release.keystore)
+                  echo "Decoded keystore size: $SIZE bytes"
+                  if [ "$SIZE" -lt 1000 ]; then
+                    echo "::error::Keystore decoded to only $SIZE bytes — KEYSTORE_BASE64 secret is empty or malformed."
+                    exit 1
+                  fi
 
             - name: Write signing config
               working-directory: frontend/android
