@@ -25,8 +25,6 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "20"
-                  cache: "yarn"
-                  cache-dependency-path: frontend/yarn.lock
 
             - name: Setup Java 21
               uses: actions/setup-java@v4
@@ -52,7 +50,7 @@ jobs:
             - name: Decode keystore from secret
               working-directory: frontend/android/app
               run: |
-                  echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+                  echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
                   ls -lh release.keystore
 
             - name: Write signing config
