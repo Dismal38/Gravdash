@@ -177,8 +177,8 @@ def make_feature():
     img.alpha_composite(stripe)
 
     # LEFT: stacked title
-    title = "GRAV-"
-    title2 = "SHIFT"
+    title = "GRAV"
+    title2 = "DASH"
     draw_neon_text(img, title, (60, 90), 130, WHITE, glow_radius=18)
     draw_neon_text(img, title, (66, 90), 130, CORAL, glow_radius=18)
     draw_neon_text(img, title, (54, 90), 130, CYAN, glow_radius=18)
@@ -206,7 +206,9 @@ def make_feature():
 
 if __name__ == "__main__":
     print("Generating GRAVDASH brand assets…")
-    make_icon()
+    # NOTE: make_icon() is intentionally skipped — the user picked the
+    # Concept 2 (Inverted World) icon. Use /app/scripts/apply_icon_concept_2.py
+    # to regenerate the icon if needed.
     make_splash()
     make_feature()
     print(f"\nAll assets written to {OUT}/")
