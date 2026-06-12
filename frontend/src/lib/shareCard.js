@@ -44,13 +44,33 @@ export async function buildShareCard({ score, rank, total, isNewHigh, name }) {
 
 export function downloadBlob(blob, filename = "gravdash-score.png") {
     const url = URL.createObjectURL(blob);
+    // 1) Try the standard "download attribute" trick (works on desktop + most
+    //    mobile Chrome). On mobile, also open the URL in a new tab as a backup
+    //    in case the browser silently blocked the download — the user can then
+    //    long-press the image and "Save to gallery".
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    a.rel = "noopener";
+    a.target = "_blank";
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 500);
+
+    // 2) Mobile fallback: also pop a new tab. This guarantees the user sees
+    //    SOMETHING happen — they can long-press to save from there.
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(
+        (typeof navigator !== "undefined" && navigator.userAgent) || ""
+    );
+    if (isMobile) {
+        try {
+            window.open(url, "_blank", "noopener");
+        } catch (e) {
+            /* noop */
+        }
+    }
+
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
 function isNativePlatform() {

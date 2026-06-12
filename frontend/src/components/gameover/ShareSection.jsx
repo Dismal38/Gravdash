@@ -42,7 +42,7 @@ export default function ShareSection({ score, isNewHigh, globalRank, playerName 
         }
     };
 
-    const disabled = sharing || score === 0;
+    const disabled = sharing;
 
     return (
         <>
