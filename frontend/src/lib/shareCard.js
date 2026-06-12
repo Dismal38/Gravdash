@@ -53,6 +53,67 @@ export function downloadBlob(blob, filename = "gravdash-score.png") {
     setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
+function isNativePlatform() {
+    return !!(
+        window.Capacitor &&
+        window.Capacitor.isNativePlatform &&
+        window.Capacitor.isNativePlatform()
+    );
+}
+
+// Save a blob to the user's device. On native (Android via Capacitor) this
+// writes the PNG to the app's Documents folder and then opens the native
+// share sheet so the user can save to Photos/Files/etc. On web it falls back
+// to the standard <a download> approach.
+export async function saveBlobToDevice(blob, filename = "gravdash-score.png") {
+    if (!isNativePlatform()) {
+        downloadBlob(blob, filename);
+        return { method: "web-download", filename };
+    }
+    try {
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+        const base64 = await blobToBase64(blob);
+        const writeResult = await Filesystem.writeFile({
+            path: filename,
+            data: base64,
+            directory: Directory.Documents,
+            recursive: true,
+        });
+        // Open the native share sheet so the user can route it to Photos/Files/etc.
+        try {
+            const { Share } = await import("@capacitor/share");
+            await Share.share({
+                title: "GRAVDASH score",
+                url: writeResult.uri,
+                dialogTitle: "Save your score card",
+            });
+            return { method: "capacitor-save+share", uri: writeResult.uri };
+        } catch (e) {
+            console.warn("[GRAVDASH shareCard] native share open failed:", e);
+            return { method: "capacitor-save-only", uri: writeResult.uri };
+        }
+    } catch (e) {
+        console.warn("[GRAVDASH shareCard] native save failed:", e);
+        // Last-resort fallback: try a web download (may or may not work in WebView).
+        downloadBlob(blob, filename);
+        return { method: "web-download-fallback", filename };
+    }
+}
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const dataUrl = reader.result;
+            // Strip the "data:image/png;base64," prefix
+            const idx = dataUrl.indexOf(",");
+            resolve(idx >= 0 ? dataUrl.slice(idx + 1) : dataUrl);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
 // ===== Share strategies (each returns a method-name on success, null otherwise) =====
 
 async function tryCapacitorShare(text) {

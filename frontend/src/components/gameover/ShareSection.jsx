@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { buildShareCard, shareCardBlob, downloadBlob } from "../../lib/shareCard";
+import { buildShareCard, shareCardBlob, saveBlobToDevice } from "../../lib/shareCard";
 
 export default function ShareSection({ score, isNewHigh, globalRank, playerName }) {
     const [sharing, setSharing] = useState(false);
@@ -19,8 +19,12 @@ export default function ShareSection({ score, isNewHigh, globalRank, playerName 
             });
             if (!blob) throw new Error("blob generation failed");
             if (mode === "download") {
-                downloadBlob(blob, `gravdash-${score}.png`);
-                setStatus("✓ SAVED");
+                const res = await saveBlobToDevice(blob, `gravdash-${score}.png`);
+                setStatus(
+                    res.method.startsWith("capacitor")
+                        ? "✓ SAVED — CHOOSE WHERE"
+                        : "✓ SAVED"
+                );
             } else {
                 const res = await shareCardBlob(blob, {
                     score,

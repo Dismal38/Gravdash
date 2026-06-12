@@ -17,15 +17,19 @@ export const GAME = {
     flapStrength: 360, // px/sec impulse magnitude (always against gravity)
     gravity: 1100, // px/sec^2
     maxFallSpeed: 720,
-    pipeSpeed: 200, // px/sec, increases over time
+    pipeSpeed: 160, // px/sec, increases over time (gentler start)
     pipeGap: 200,
     pipeWidth: 70,
-    pipeSpacing: 280, // distance between pipe pairs
+    pipeSpacing: 320, // distance between pipe pairs (more reaction time)
     flipPipeChance: 0.22,
     orbChance: 0.35,
     autoFlipEverySec: 22,
     speedRamp: 6,
-    maxSpeed: 460,
+    maxSpeed: 380, // capped so late-game stays beatable
+    // Max vertical delta between consecutive pipe gaps. Keeps every pipe
+    // physically reachable from the previous one (math: ~1 flap covers
+    // ~360 px/sec * 1.4 sec ≈ 500 px before gravity flips the bird back).
+    maxGapDelta: 460,
 };
 
 export const COLORS = {
@@ -101,6 +105,7 @@ export function createInitialState(viewport, seed = null) {
         shake: 0,
         autoFlipFlash: 0,
         dead: false,
+        lastGapY: null, // tracks previous pipe's gap for max-delta clamp
     };
     spawnPipe(s);
     return s;
@@ -110,7 +115,18 @@ export function spawnPipe(s) {
     const { w, h } = s.viewport;
     const margin = 70;
     const gap = GAME.pipeGap;
-    const gapY = randRange(s.rng, margin + gap / 2, h - margin - gap / 2);
+    const minY = margin + gap / 2;
+    const maxY = h - margin - gap / 2;
+    // Pick a candidate gap Y, then clamp it to within maxGapDelta of the previous
+    // gap. This guarantees every consecutive pipe is physically reachable.
+    let gapY = randRange(s.rng, minY, maxY);
+    if (s.lastGapY != null) {
+        const lo = Math.max(minY, s.lastGapY - GAME.maxGapDelta);
+        const hi = Math.min(maxY, s.lastGapY + GAME.maxGapDelta);
+        if (gapY < lo) gapY = lo;
+        else if (gapY > hi) gapY = hi;
+    }
+    s.lastGapY = gapY;
     const isFlip = s.rng() < GAME.flipPipeChance;
     s.pipes.push({
         x: w + 40,
