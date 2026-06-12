@@ -24,13 +24,21 @@ export const GAME = {
     flipPipeChance: 0.22,
     orbChance: 0.35,
     autoFlipEverySec: 22,
-    speedRamp: 6,
+    speedRamp: 3, // slower difficulty curve — ~70 pipes to reach max speed
     maxSpeed: 380, // capped so late-game stays beatable
-    // Max vertical delta between consecutive pipe gaps. Keeps every pipe
-    // physically reachable from the previous one (math: ~1 flap covers
-    // ~360 px/sec * 1.4 sec ≈ 500 px before gravity flips the bird back).
-    maxGapDelta: 460,
+    // Vertical gap delta is computed dynamically per-speed (see safeGapDelta below)
+    // so every consecutive pipe is reachable at any speed, not just the starting one.
+    gapReachFraction: 0.78, // 78% of theoretical max reach — leaves margin for player error
 };
+
+// Maximum vertical distance the bird can travel UPWARD between two consecutive
+// pipes given the current scroll speed. = flapStrength * (pipeSpacing / speed),
+// scaled by gapReachFraction so the gap is always reachable with margin.
+export function safeGapDelta(speed) {
+    const timeBetweenPipes = GAME.pipeSpacing / speed;
+    const maxReachUp = GAME.flapStrength * timeBetweenPipes;
+    return Math.max(140, maxReachUp * GAME.gapReachFraction);
+}
 
 export const COLORS = {
     bg: "#050508",
@@ -121,8 +129,9 @@ export function spawnPipe(s) {
     // gap. This guarantees every consecutive pipe is physically reachable.
     let gapY = randRange(s.rng, minY, maxY);
     if (s.lastGapY != null) {
-        const lo = Math.max(minY, s.lastGapY - GAME.maxGapDelta);
-        const hi = Math.min(maxY, s.lastGapY + GAME.maxGapDelta);
+        const delta = safeGapDelta(s.speed);
+        const lo = Math.max(minY, s.lastGapY - delta);
+        const hi = Math.min(maxY, s.lastGapY + delta);
         if (gapY < lo) gapY = lo;
         else if (gapY > hi) gapY = hi;
     }
