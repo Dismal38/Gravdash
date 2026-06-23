@@ -134,6 +134,18 @@ body {
     animation: pulseSoft 1.6s ease-in-out infinite;
 }
 
+@keyframes pulseGlow {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.85;
+        transform: scale(1.06);
+    }
+}
+
 @keyframes hiscoreBlink {
     0%,
     100% {

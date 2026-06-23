@@ -106,10 +106,17 @@ export function createInitialState(viewport, seed = null) {
         shake: 0,
         dead: false,
         lastGapY: null, // tracks previous pipe's gap for max-delta clamp
+        // Polish state
+        slowMoTimer: 0, // close-call slow motion (seconds remaining)
+        milestoneFlash: 0, // brief celebratory pulse on milestones (0..1)
+        milestoneValue: 0, // value to render in the pulse text
     };
     spawnPipe(s);
     return s;
 }
+
+// Milestone scores that trigger a celebratory pulse.
+const MILESTONES = new Set([10, 25, 50, 75, 100, 150, 200, 300, 500]);
 
 export function spawnPipe(s) {
     const { w, h } = s.viewport;
@@ -235,6 +242,10 @@ function processScoringAndFlipPipes(s, onScore) {
             s.score += 1;
             s.speed = Math.min(GAME.maxSpeed, s.speed + GAME.speedRamp);
             sfxScore();
+            if (MILESTONES.has(s.score)) {
+                s.milestoneFlash = 1.0;
+                s.milestoneValue = s.score;
+            }
             if (onScore) onScore(s.score);
         }
         if (p.isFlip && !p.flipTriggered && p.x + GAME.pipeWidth < s.bird.x) {
@@ -258,6 +269,31 @@ function birdHitsAnyPipe(s) {
         }
     }
     return false;
+}
+
+// Detects "close calls" — the bird passing within `closeCallMargin` of a pipe
+// edge. When detected, briefly enter slow-motion for cinematic flair.
+const CLOSE_CALL_MARGIN = 12; // px
+function detectCloseCalls(s) {
+    for (const p of s.pipes) {
+        if (p.closeCallSeen) continue;
+        // Only check while the bird is overlapping the pipe horizontally.
+        if (
+            s.bird.x + GAME.birdRadius > p.x &&
+            s.bird.x - GAME.birdRadius < p.x + GAME.pipeWidth
+        ) {
+            const top = p.gapY - p.gapH / 2;
+            const bot = p.gapY + p.gapH / 2;
+            const distTop = s.bird.y - GAME.birdRadius - top;
+            const distBot = bot - (s.bird.y + GAME.birdRadius);
+            const minDist = Math.min(distTop, distBot);
+            if (minDist >= 0 && minDist < CLOSE_CALL_MARGIN) {
+                p.closeCallSeen = true;
+                // ~0.28s of slow-mo, doesn't stack hard if multiple in a row
+                s.slowMoTimer = Math.max(s.slowMoTimer, 0.28);
+            }
+        }
+    }
 }
 
 function tickParticles(s, dt) {
@@ -289,6 +325,8 @@ function emitThrusterParticle(s) {
 
 function tickEffectTimers(s, dt) {
     if (s.shake > 0) s.shake = Math.max(0, s.shake - dt);
+    if (s.slowMoTimer > 0) s.slowMoTimer = Math.max(0, s.slowMoTimer - dt);
+    if (s.milestoneFlash > 0) s.milestoneFlash = Math.max(0, s.milestoneFlash - dt * 1.2);
 }
 
 /**
@@ -298,9 +336,11 @@ function tickEffectTimers(s, dt) {
  */
 export function step(s, dt, callbacks = {}) {
     if (s.dead) return { died: false, gravityDir: s.gravityDir, score: s.score };
-    s.timeSec += dt;
+    // Apply close-call slow motion (does NOT slow effect timers, only world physics)
+    const worldDt = s.slowMoTimer > 0 ? dt * 0.55 : dt;
+    s.timeSec += worldDt;
 
-    applyBirdPhysics(s, dt);
+    applyBirdPhysics(s, worldDt);
     emitThrusterParticle(s);
 
     if (birdHitsBoundary(s)) {
@@ -308,15 +348,16 @@ export function step(s, dt, callbacks = {}) {
         return { died: true, gravityDir: s.gravityDir, score: s.score };
     }
 
-    advanceWorld(s, dt);
+    advanceWorld(s, worldDt);
     processScoringAndFlipPipes(s, callbacks.onScore);
+    detectCloseCalls(s);
 
     if (birdHitsAnyPipe(s)) {
         endRun(s);
         return { died: true, gravityDir: s.gravityDir, score: s.score };
     }
 
-    tickParticles(s, dt);
+    tickParticles(s, worldDt);
     tickEffectTimers(s, dt);
     return { died: false, gravityDir: s.gravityDir, score: s.score };
 }
@@ -461,4 +502,41 @@ export function draw(canvas, s) {
     drawParticles(ctx, s.particles);
     drawBird(ctx, s.bird, s.gravityDir);
     ctx.restore();
+
+    // ===== Polish overlays =====
+    // Close-call slow-mo vignette: subtle dark edge gradient while time is slowed
+    if (s.slowMoTimer > 0) {
+        const intensity = Math.min(1, s.slowMoTimer / 0.28);
+        const grad = ctx.createRadialGradient(
+            w / 2,
+            h / 2,
+            Math.min(w, h) * 0.25,
+            w / 2,
+            h / 2,
+            Math.max(w, h) * 0.6
+        );
+        grad.addColorStop(0, "rgba(0, 240, 255, 0)");
+        grad.addColorStop(1, `rgba(0, 240, 255, ${0.18 * intensity})`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    // Milestone celebration pulse — large flash number that scales+fades
+    if (s.milestoneFlash > 0) {
+        const t = s.milestoneFlash; // 1 -> 0
+        const scale = 1.6 + (1 - t) * 1.4;
+        const alpha = t;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(w / 2, h / 2);
+        ctx.scale(scale, scale);
+        ctx.font = `900 80px "Press Start 2P", "VT323", system-ui, monospace`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.shadowColor = "#FFD600";
+        ctx.shadowBlur = 24;
+        ctx.fillStyle = "#FFD600";
+        ctx.fillText(String(s.milestoneValue), 0, 0);
+        ctx.restore();
+    }
 }

@@ -210,7 +210,12 @@ export default function Game() {
             </div>
 
             {phase === "playing" && (
-                <HUD score={score} gravityDir={gravityDir} mode={mode} />
+                <HUD
+                    score={score}
+                    gravityDir={gravityDir}
+                    mode={mode}
+                    personalBest={activeBest}
+                />
             )}
 
             {phase === "menu" && (

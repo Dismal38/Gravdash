@@ -1,6 +1,7 @@
 import React from "react";
 
-export default function HUD({ score, gravityDir, mode }) {
+export default function HUD({ score, gravityDir, mode, personalBest }) {
+    const beatBest = personalBest > 0 && score > personalBest;
     return (
         <>
             <div
@@ -14,6 +15,47 @@ export default function HUD({ score, gravityDir, mode }) {
             >
                 {score.toString().padStart(2, "0")}
             </div>
+
+            {/* Personal best ghost number (top-right). Turns into "NEW BEST!" once surpassed. */}
+            {personalBest > 0 && (
+                <div
+                    className="absolute top-4 right-32 z-20 font-mono uppercase tracking-[0.25em] pointer-events-none text-right"
+                    data-testid="hud-personal-best"
+                >
+                    {beatBest ? (
+                        <div
+                            style={{
+                                color: "#39FF14",
+                                fontSize: "0.85rem",
+                                textShadow: "0 0 12px rgba(57, 255, 20, 0.7)",
+                                animation: "pulseGlow 1.2s ease-in-out infinite",
+                            }}
+                        >
+                            ★ NEW BEST!
+                        </div>
+                    ) : (
+                        <>
+                            <div
+                                style={{
+                                    fontSize: "0.65rem",
+                                    color: "rgba(244,244,245,0.35)",
+                                }}
+                            >
+                                BEST
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: "0.95rem",
+                                    color: "rgba(244,244,245,0.55)",
+                                }}
+                            >
+                                {personalBest.toString().padStart(2, "0")}
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+
             <div
                 className="absolute top-4 left-4 z-20 font-mono uppercase text-xs tracking-[0.3em] flex items-center gap-3 pointer-events-none"
                 data-testid="hud-gravity"
