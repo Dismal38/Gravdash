@@ -83,6 +83,30 @@ export function sfxOrb() {
     blip({ freq: 660, type: "sine", duration: 0.1, gain: 0.22, slide: 400 });
 }
 
+// Rising 3-note chime for the 100-pipe milestone cameo. Triumphant, original.
+export function sfxMilestoneChime() {
+    const c = ensureCtx();
+    if (!c || muted) return;
+    const notes = [523.25, 659.25, 987.77]; // C5, E5, B5
+    notes.forEach((f, i) => {
+        setTimeout(
+            () => blip({ freq: f, type: "triangle", duration: 0.22, gain: 0.22 }),
+            i * 110,
+        );
+    });
+}
+
+// Eerie sweep for the 300-pipe "void breach" cameo.
+export function sfxVoidBreach() {
+    const c = ensureCtx();
+    if (!c || muted) return;
+    blip({ freq: 880, type: "sawtooth", duration: 0.45, gain: 0.22, slide: -700 });
+    setTimeout(
+        () => blip({ freq: 120, type: "square", duration: 0.35, gain: 0.18, slide: 200 }),
+        200,
+    );
+}
+
 export function sfxCrash() {
     const c = ensureCtx();
     if (!c || muted) return;

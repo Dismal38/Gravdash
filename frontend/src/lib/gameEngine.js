@@ -7,6 +7,8 @@ import {
     sfxFlip,
     sfxCrash,
     sfxGameOver,
+    sfxMilestoneChime,
+    sfxVoidBreach,
     stopMusic,
 } from "./audio";
 import { hapticMedium, hapticHeavy } from "./native";
@@ -111,6 +113,14 @@ export function createInitialState(viewport, seed = null) {
         milestoneFlash: 0, // brief celebratory pulse on milestones (0..1)
         milestoneValue: 0, // value to render in the pulse text
         flipGraceTimer: 0, // post-flip reduced-gravity window (seconds)
+        // Milestone cameos
+        guardianTimer: 0, // 100: cyan AI guardian on top of a pipe (seconds remaining)
+        guardianPipe: null, // ref to the pipe the guardian sits on
+        flockTimer: 0, // 200: background ship flock (seconds remaining)
+        flockShips: null, // [{x, y, vx, vy, phase}]
+        voidBreachTimer: 0, // 300: VOID BREACH effect (seconds remaining)
+        invertedTimer: 0, // 500: grid color invert (seconds remaining)
+        triggeredCameos: new Set(), // milestones already triggered this run
     };
     spawnPipe(s);
     return s;
@@ -246,6 +256,41 @@ function advanceWorld(s, dt) {
     s.pipes = s.pipes.filter((p) => p.x + GAME.pipeWidth > -10);
 }
 
+function triggerCameoFor(s, score) {
+    if (s.triggeredCameos.has(score)) return;
+    s.triggeredCameos.add(score);
+    if (score === 100) {
+        // Find the most recently spawned pipe to sit the guardian on top of
+        const upcoming = s.pipes.filter((p) => !p.scored);
+        const pipe = upcoming[upcoming.length - 1] || s.pipes[s.pipes.length - 1];
+        if (pipe) {
+            s.guardianPipe = pipe;
+            s.guardianTimer = 3.2;
+            sfxMilestoneChime();
+        }
+    } else if (score === 200) {
+        // Spawn a background flock of 7 ships flying across in formation
+        const { w, h } = s.viewport;
+        s.flockTimer = 4.0;
+        s.flockShips = [];
+        for (let i = 0; i < 7; i++) {
+            s.flockShips.push({
+                x: w + 80 + i * 35,
+                y: h * 0.18 + (i % 2) * 22 + Math.sin(i) * 14,
+                vx: -180,
+                vy: 0,
+                phase: i * 0.4,
+            });
+        }
+    } else if (score === 300) {
+        s.voidBreachTimer = 2.0;
+        s.shake = Math.max(s.shake, 0.4);
+        sfxVoidBreach();
+    } else if (score === 500) {
+        s.invertedTimer = 5.0;
+    }
+}
+
 function processScoringAndFlipPipes(s, onScore) {
     for (const p of s.pipes) {
         if (!p.scored && p.x + GAME.pipeWidth < s.bird.x) {
@@ -257,6 +302,7 @@ function processScoringAndFlipPipes(s, onScore) {
                 s.milestoneFlash = 1.0;
                 s.milestoneValue = s.score;
             }
+            triggerCameoFor(s, s.score);
             if (onScore) onScore(s.score);
         }
         if (p.isFlip && !p.flipTriggered && p.x + GAME.pipeWidth < s.bird.x) {
@@ -339,6 +385,24 @@ function tickEffectTimers(s, dt) {
     if (s.slowMoTimer > 0) s.slowMoTimer = Math.max(0, s.slowMoTimer - dt);
     if (s.milestoneFlash > 0) s.milestoneFlash = Math.max(0, s.milestoneFlash - dt * 1.2);
     if (s.flipGraceTimer > 0) s.flipGraceTimer = Math.max(0, s.flipGraceTimer - dt);
+
+    // Cameos
+    if (s.guardianTimer > 0) {
+        s.guardianTimer = Math.max(0, s.guardianTimer - dt);
+        if (s.guardianTimer === 0) s.guardianPipe = null;
+    }
+    if (s.flockTimer > 0) {
+        s.flockTimer = Math.max(0, s.flockTimer - dt);
+        if (s.flockShips) {
+            for (const sh of s.flockShips) {
+                sh.x += sh.vx * dt;
+                sh.y += Math.sin(s.timeSec * 3 + sh.phase) * 0.6;
+            }
+        }
+        if (s.flockTimer === 0) s.flockShips = null;
+    }
+    if (s.voidBreachTimer > 0) s.voidBreachTimer = Math.max(0, s.voidBreachTimer - dt);
+    if (s.invertedTimer > 0) s.invertedTimer = Math.max(0, s.invertedTimer - dt);
 }
 
 /**
@@ -494,15 +558,156 @@ function drawParticles(ctx, particles) {
     ctx.globalAlpha = 1;
 }
 
+// ====== Cameo render helpers ======
+
+// 100-mark: cyan AI guardian sits on top of a pipe, salutes, dissolves into pixels.
+function drawGuardian(ctx, s) {
+    if (s.guardianTimer <= 0 || !s.guardianPipe) return;
+    const p = s.guardianPipe;
+    const total = 3.2;
+    const t = s.guardianTimer;
+    const age = total - t;
+    // Guardian sits ON TOP edge of upper pipe segment (just above the gap-top pipe).
+    const pipeTop = p.gapY - p.gapH / 2; // y of gap top edge — top pipe ends here
+    const gx = p.x + GAME.pipeWidth / 2;
+    const gy = pipeTop - 14;
+
+    // Salute animation: arm raises 0.4s → 1.4s, then falls
+    const saluteT = Math.max(0, Math.min(1, (age - 0.4) / 1.0));
+    const armAngle = -Math.PI / 2 + Math.sin(saluteT * Math.PI) * -0.8;
+
+    // Dissolve: last 0.6s breaks into pixel particles
+    const dissolveProgress = Math.max(0, Math.min(1, (age - 2.4) / 0.7));
+    const alpha = 1 - dissolveProgress;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = "#00F0FF";
+    ctx.shadowBlur = 14;
+
+    // Body — small cyan rounded rect with a slight glitch jitter
+    const jitter = Math.sin(s.timeSec * 50) * 1.2;
+    ctx.fillStyle = "#00F0FF";
+    ctx.fillRect(gx - 6 + jitter, gy - 12, 12, 14);
+
+    // Single white eye
+    ctx.fillStyle = "#F4F4F5";
+    ctx.beginPath();
+    ctx.arc(gx + jitter, gy - 6, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#050508";
+    ctx.beginPath();
+    ctx.arc(gx + jitter, gy - 6, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Salute arm
+    ctx.strokeStyle = "#00F0FF";
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(gx + 4 + jitter, gy - 8);
+    ctx.lineTo(
+        gx + 4 + jitter + Math.cos(armAngle) * 10,
+        gy - 8 + Math.sin(armAngle) * 10,
+    );
+    ctx.stroke();
+
+    // Tiny legs
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(gx - 3 + jitter, gy + 2);
+    ctx.lineTo(gx - 3 + jitter, gy + 6);
+    ctx.moveTo(gx + 3 + jitter, gy + 2);
+    ctx.lineTo(gx + 3 + jitter, gy + 6);
+    ctx.stroke();
+
+    // Dissolve sparkles (last 0.7s)
+    if (dissolveProgress > 0) {
+        ctx.fillStyle = "#00F0FF";
+        for (let i = 0; i < 12; i++) {
+            const ang = (i / 12) * Math.PI * 2;
+            const r = dissolveProgress * 28;
+            const px = gx + Math.cos(ang) * r;
+            const py = gy - 4 + Math.sin(ang) * r;
+            ctx.fillRect(px - 1, py - 1, 2, 2);
+        }
+    }
+    ctx.restore();
+}
+
+// 200-mark: background flock of mini ships flying across the screen.
+function drawFlock(ctx, s) {
+    if (s.flockTimer <= 0 || !s.flockShips) return;
+    const fadeIn = Math.min(1, (4.0 - s.flockTimer) / 0.4);
+    const fadeOut = Math.min(1, s.flockTimer / 0.8);
+    const alpha = Math.min(fadeIn, fadeOut) * 0.65;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = "#FF3366";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "#FF3366";
+    for (const sh of s.flockShips) {
+        ctx.beginPath();
+        ctx.moveTo(sh.x + 6, sh.y);
+        ctx.lineTo(sh.x - 4, sh.y - 4);
+        ctx.lineTo(sh.x - 4, sh.y + 4);
+        ctx.closePath();
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+// 300-mark: VOID BREACH banner + chromatic distortion.
+function drawVoidBreach(ctx, s, w, h) {
+    if (s.voidBreachTimer <= 0) return;
+    const total = 2.0;
+    const t = s.voidBreachTimer;
+    const age = total - t;
+    const fadeIn = Math.min(1, age / 0.2);
+    const fadeOut = Math.min(1, t / 0.4);
+    const alpha = Math.min(fadeIn, fadeOut);
+
+    // Magenta tint overlay
+    ctx.save();
+    ctx.globalAlpha = alpha * 0.18;
+    ctx.fillStyle = "#FF3366";
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+
+    // Centered banner
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `900 60px "Press Start 2P", "VT323", system-ui, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "#FF3366";
+    ctx.shadowBlur = 32;
+    ctx.fillStyle = "#FF3366";
+    ctx.fillText("VOID BREACH", w / 2, h / 2);
+    // Cyan chromatic offset duplicate
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = alpha * 0.7;
+    ctx.fillStyle = "#00F0FF";
+    ctx.fillText("VOID BREACH", w / 2 + 4, h / 2 + 2);
+    ctx.restore();
+}
+
 export function draw(canvas, s) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    ctx.fillStyle = COLORS.bg;
+    // 500-mark: inverted grid colors for 5 sec
+    const inverted = s && s.invertedTimer > 0;
+    ctx.fillStyle = inverted ? "#1a0a1a" : COLORS.bg;
     ctx.fillRect(0, 0, w, h);
+    // For inverted mode, temporarily switch grid color
+    const savedGrid = COLORS.grid;
+    if (inverted) COLORS.grid = "rgba(255, 51, 102, 0.12)";
     drawGrid(ctx, w, h, s ? s.timeSec : 0);
+    if (inverted) COLORS.grid = savedGrid;
     if (!s) return;
 
     ctx.save();
@@ -510,10 +715,17 @@ export function draw(canvas, s) {
         ctx.translate(randRange(s.rng, -6, 6) * s.shake, randRange(s.rng, -6, 6) * s.shake);
     }
 
+    // Cameo: 200-mark flock flies behind pipes
+    drawFlock(ctx, s);
     for (const p of s.pipes) drawPipe(ctx, p, h);
     drawParticles(ctx, s.particles);
+    // Cameo: 100-mark guardian on top of its pipe
+    drawGuardian(ctx, s);
     drawBird(ctx, s.bird, s.gravityDir);
     ctx.restore();
+
+    // Cameo: 300-mark VOID BREACH overlay
+    drawVoidBreach(ctx, s, w, h);
 
     // ===== Polish overlays =====
     // Close-call slow-mo vignette: subtle dark edge gradient while time is slowed
