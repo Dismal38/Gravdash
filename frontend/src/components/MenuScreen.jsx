@@ -76,9 +76,7 @@ export default function MenuScreen({
             >
                 TAP / SPACE: FLAP
                 <br />
-                <span style={{ color: "#39FF14" }}>GREEN ORB</span>: FLIP GRAVITY ·{" "}
-                <span style={{ color: "#FF3366" }}>RED PIPES</span>: AUTO-FLIP ·{" "}
-                <span style={{ color: "#FFD600" }}>EVERY 22S</span>: GLOBAL FLIP
+                <span style={{ color: "#FF3366" }}>RED PIPES</span> FLIP YOUR GRAVITY
             </div>
 
             <div

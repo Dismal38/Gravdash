@@ -11,6 +11,7 @@ import MenuScreen from "./MenuScreen";
 import HUD from "./HUD";
 import PauseScreen from "./PauseScreen";
 import GameOverScreen from "./GameOverScreen";
+import TutorialOverlay from "./TutorialOverlay";
 import { useGameLoop } from "../hooks/useGameLoop";
 import { useGameInput } from "../hooks/useGameInput";
 import { useCanvasResize } from "../hooks/useCanvasResize";
@@ -19,6 +20,7 @@ import { useAndroidBackButton } from "../hooks/useAndroidBackButton";
 const HIGH_SCORE_KEY = "gravdash_local_high";
 const PLAYER_NAME_KEY = "gravdash_name";
 const DAILY_BEST_KEY_PREFIX = "gravdash_daily_";
+const TUTORIAL_SEEN_KEY = "gravdash_tutorial_seen";
 
 function dailyBestKey(dateLabel) {
     return `${DAILY_BEST_KEY_PREFIX}${dateLabel}`;
@@ -43,6 +45,14 @@ export default function Game() {
     const [muted, setMutedState] = useState(false);
     const [playerName, setPlayerName] = useState(() => readString(PLAYER_NAME_KEY, ""));
     const [exitPrompt, setExitPrompt] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(
+        () => readNumber(TUTORIAL_SEEN_KEY, 0) === 0
+    );
+
+    const dismissTutorial = useCallback(() => {
+        setShowTutorial(false);
+        writeValue(TUTORIAL_SEEN_KEY, 1);
+    }, []);
 
     const highScoreRef = useRef(highScore);
     const dailyBestRef = useRef(dailyBest);
@@ -242,6 +252,11 @@ export default function Game() {
                 >
                     PRESS BACK AGAIN TO EXIT
                 </div>
+            )}
+
+            {/* First-launch tutorial — sits above everything, skippable */}
+            {showTutorial && phase === "menu" && (
+                <TutorialOverlay onClose={dismissTutorial} />
             )}
         </div>
     );

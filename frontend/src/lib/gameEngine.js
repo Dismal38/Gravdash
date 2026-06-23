@@ -5,7 +5,6 @@ import {
     sfxFlap,
     sfxScore,
     sfxFlip,
-    sfxOrb,
     sfxCrash,
     sfxGameOver,
     stopMusic,
@@ -17,18 +16,16 @@ export const GAME = {
     flapStrength: 360, // px/sec impulse magnitude (always against gravity)
     gravity: 1100, // px/sec^2
     maxFallSpeed: 720,
-    pipeSpeed: 160, // px/sec, increases over time (gentler start)
-    pipeGap: 200,
+    pipeSpeed: 130, // px/sec starting speed (gentle for new players)
+    pipeGap: 220, // generous starting gap
     pipeWidth: 70,
-    pipeSpacing: 320, // distance between pipe pairs (more reaction time)
-    flipPipeChance: 0.22,
-    orbChance: 0.35,
-    autoFlipEverySec: 22,
-    speedRamp: 3, // slower difficulty curve — ~70 pipes to reach max speed
-    maxSpeed: 380, // capped so late-game stays beatable
+    pipeSpacing: 340, // generous spacing between consecutive pipes
+    flipPipeChance: 0.20, // ~1 in 5 pipes flips gravity
+    speedRamp: 2, // very gradual speed increase
+    maxSpeed: 360, // capped so late-game remains beatable
     // Vertical gap delta is computed dynamically per-speed (see safeGapDelta below)
     // so every consecutive pipe is reachable at any speed, not just the starting one.
-    gapReachFraction: 0.78, // 78% of theoretical max reach — leaves margin for player error
+    gapReachFraction: 0.78,
 };
 
 // Maximum vertical distance the bird can travel UPWARD between two consecutive
@@ -49,8 +46,6 @@ export const COLORS = {
     pipeGlow: "rgba(0, 240, 255, 0.55)",
     flipPipe: "#FF3366",
     flipPipeGlow: "rgba(255, 51, 102, 0.55)",
-    orb: "#39FF14",
-    orbGlow: "rgba(57, 255, 20, 0.7)",
     particleA: "#00F0FF",
     particleB: "#FF3366",
 };
@@ -103,15 +98,12 @@ export function createInitialState(viewport, seed = null) {
         },
         gravityDir: 1,
         pipes: [],
-        orbs: [],
         particles: [],
         score: 0,
         speed: GAME.pipeSpeed,
         distSinceLastPipe: 0,
         timeSec: 0,
-        timeSinceAutoFlip: 0,
         shake: 0,
-        autoFlipFlash: 0,
         dead: false,
         lastGapY: null, // tracks previous pipe's gap for max-delta clamp
     };
@@ -125,7 +117,7 @@ export function spawnPipe(s) {
     const gap = GAME.pipeGap;
     const minY = margin + gap / 2;
     const maxY = h - margin - gap / 2;
-    // Pick a candidate gap Y, then clamp it to within maxGapDelta of the previous
+    // Pick a candidate gap Y, then clamp to within safeGapDelta of the previous
     // gap. This guarantees every consecutive pipe is physically reachable.
     let gapY = randRange(s.rng, minY, maxY);
     if (s.lastGapY != null) {
@@ -145,11 +137,6 @@ export function spawnPipe(s) {
         isFlip,
         flipTriggered: false,
     });
-    if (!isFlip && s.rng() < GAME.orbChance) {
-        const orbX = w + 40 + GAME.pipeSpacing / 2;
-        const orbY = randRange(s.rng, margin + 30, h - margin - 30);
-        s.orbs.push({ x: orbX, y: orbY, collected: false, t: 0 });
-    }
 }
 
 export function flap(s) {
@@ -238,12 +225,7 @@ function advanceWorld(s, dt) {
         spawnPipe(s);
     }
     for (const p of s.pipes) p.x -= ds;
-    for (const o of s.orbs) {
-        o.x -= ds;
-        o.t += dt;
-    }
     s.pipes = s.pipes.filter((p) => p.x + GAME.pipeWidth > -10);
-    s.orbs = s.orbs.filter((o) => o.x > -30 && !o.collected);
 }
 
 function processScoringAndFlipPipes(s, onScore) {
@@ -258,20 +240,6 @@ function processScoringAndFlipPipes(s, onScore) {
         if (p.isFlip && !p.flipTriggered && p.x + GAME.pipeWidth < s.bird.x) {
             p.flipTriggered = true;
             doGravityFlip(s, "pipe");
-        }
-    }
-}
-
-function processOrbCollection(s) {
-    for (const o of s.orbs) {
-        if (o.collected) continue;
-        const dx = o.x - s.bird.x;
-        const dy = o.y - s.bird.y;
-        const r = GAME.birdRadius + 14;
-        if (dx * dx + dy * dy < r * r) {
-            o.collected = true;
-            sfxOrb();
-            doGravityFlip(s, "orb");
         }
     }
 }
@@ -321,7 +289,6 @@ function emitThrusterParticle(s) {
 
 function tickEffectTimers(s, dt) {
     if (s.shake > 0) s.shake = Math.max(0, s.shake - dt);
-    if (s.autoFlipFlash > 0) s.autoFlipFlash = Math.max(0, s.autoFlipFlash - dt);
 }
 
 /**
@@ -332,13 +299,6 @@ function tickEffectTimers(s, dt) {
 export function step(s, dt, callbacks = {}) {
     if (s.dead) return { died: false, gravityDir: s.gravityDir, score: s.score };
     s.timeSec += dt;
-    s.timeSinceAutoFlip += dt;
-
-    if (s.timeSinceAutoFlip >= GAME.autoFlipEverySec) {
-        s.timeSinceAutoFlip = 0;
-        s.autoFlipFlash = 0.7;
-        doGravityFlip(s, "auto");
-    }
 
     applyBirdPhysics(s, dt);
     emitThrusterParticle(s);
@@ -350,7 +310,6 @@ export function step(s, dt, callbacks = {}) {
 
     advanceWorld(s, dt);
     processScoringAndFlipPipes(s, callbacks.onScore);
-    processOrbCollection(s);
 
     if (birdHitsAnyPipe(s)) {
         endRun(s);
@@ -421,37 +380,6 @@ function drawPipe(ctx, p, h) {
             ctx.fillRect(p.x + 8, yy, GAME.pipeWidth - 16, 4);
         }
     }
-    ctx.restore();
-}
-
-function drawOrb(ctx, o) {
-    ctx.save();
-    const pulse = 1 + Math.sin(o.t * 6) * 0.15;
-    ctx.shadowColor = COLORS.orbGlow;
-    ctx.shadowBlur = 24;
-    ctx.fillStyle = COLORS.orb;
-    ctx.beginPath();
-    ctx.arc(o.x, o.y, 10 * pulse, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.beginPath();
-    ctx.arc(o.x - 2, o.y - 2, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = COLORS.orb;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(o.x, o.y - 18);
-    ctx.lineTo(o.x - 4, o.y - 14);
-    ctx.moveTo(o.x, o.y - 18);
-    ctx.lineTo(o.x + 4, o.y - 14);
-    ctx.moveTo(o.x, o.y + 18);
-    ctx.lineTo(o.x - 4, o.y + 14);
-    ctx.moveTo(o.x, o.y + 18);
-    ctx.lineTo(o.x + 4, o.y + 14);
-    ctx.stroke();
     ctx.restore();
 }
 
@@ -529,15 +457,7 @@ export function draw(canvas, s) {
         ctx.translate(randRange(s.rng, -6, 6) * s.shake, randRange(s.rng, -6, 6) * s.shake);
     }
 
-    if (s.autoFlipFlash > 0) {
-        ctx.fillStyle = `rgba(255, 214, 0, ${s.autoFlipFlash * 0.45})`;
-        ctx.fillRect(0, 0, w, h);
-    }
-
     for (const p of s.pipes) drawPipe(ctx, p, h);
-    for (const o of s.orbs) {
-        if (!o.collected) drawOrb(ctx, o);
-    }
     drawParticles(ctx, s.particles);
     drawBird(ctx, s.bird, s.gravityDir);
     ctx.restore();
