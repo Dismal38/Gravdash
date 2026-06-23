@@ -110,6 +110,7 @@ export function createInitialState(viewport, seed = null) {
         slowMoTimer: 0, // close-call slow motion (seconds remaining)
         milestoneFlash: 0, // brief celebratory pulse on milestones (0..1)
         milestoneValue: 0, // value to render in the pulse text
+        flipGraceTimer: 0, // post-flip reduced-gravity window (seconds)
     };
     spawnPipe(s);
     return s;
@@ -165,7 +166,13 @@ export function flap(s) {
 
 function doGravityFlip(s, source) {
     s.gravityDir *= -1;
-    s.bird.vy *= -0.5;
+    // Kill most of the bird's momentum on flip so the player doesn't get
+    // yanked into a fast dive. Tiny inertial nudge (vy * -0.15) keeps it
+    // feeling physical without the snap-dive.
+    s.bird.vy *= -0.15;
+    // Brief reduced-gravity grace window — gives the player ~0.2 sec to read
+    // the new gravity direction before falling/rising kicks in fully.
+    s.flipGraceTimer = 0.22;
     sfxFlip();
     hapticMedium();
     const baseColor = source === "pipe" ? COLORS.particleB : COLORS.particleA;
@@ -211,7 +218,11 @@ function endRun(s) {
 // ====== Sub-step helpers (extracted to keep step() small) ======
 
 function applyBirdPhysics(s, dt) {
-    const g = GAME.gravity * s.gravityDir;
+    // During the brief post-flip grace window, gravity is heavily reduced
+    // so the bird floats for ~0.2 sec — gives the player time to react to
+    // the new gravity direction without being snapped into a dive.
+    const graceFactor = s.flipGraceTimer > 0 ? 0.35 : 1;
+    const g = GAME.gravity * s.gravityDir * graceFactor;
     s.bird.vy = Math.max(-GAME.maxFallSpeed, Math.min(GAME.maxFallSpeed, s.bird.vy + g * dt));
     s.bird.y += s.bird.vy * dt;
     s.bird.rotation = Math.max(-0.7, Math.min(0.9, s.bird.vy / 600)) * s.gravityDir;
@@ -327,6 +338,7 @@ function tickEffectTimers(s, dt) {
     if (s.shake > 0) s.shake = Math.max(0, s.shake - dt);
     if (s.slowMoTimer > 0) s.slowMoTimer = Math.max(0, s.slowMoTimer - dt);
     if (s.milestoneFlash > 0) s.milestoneFlash = Math.max(0, s.milestoneFlash - dt * 1.2);
+    if (s.flipGraceTimer > 0) s.flipGraceTimer = Math.max(0, s.flipGraceTimer - dt);
 }
 
 /**
