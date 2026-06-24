@@ -37,7 +37,7 @@ jobs:
 
             - name: Install JS dependencies
               working-directory: frontend
-              run: yarn install --frozen-lockfile
+              run: yarn install
 
             - name: Build React production bundle
               working-directory: frontend

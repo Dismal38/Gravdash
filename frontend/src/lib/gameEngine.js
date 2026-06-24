@@ -120,6 +120,8 @@ export function createInitialState(viewport, seed = null) {
         flockShips: null, // [{x, y, vx, vy, phase}]
         voidBreachTimer: 0, // 300: VOID BREACH effect (seconds remaining)
         invertedTimer: 0, // 500: grid color invert (seconds remaining)
+        cometTimer: 0, // 50: rainbow phoenix-comet (seconds remaining)
+        comet: null, // {startX,startY,endX,endY,life,total}
         triggeredCameos: new Set(), // milestones already triggered this run
     };
     spawnPipe(s);
@@ -259,7 +261,19 @@ function advanceWorld(s, dt) {
 function triggerCameoFor(s, score) {
     if (s.triggeredCameos.has(score)) return;
     s.triggeredCameos.add(score);
-    if (score === 100) {
+    if (score === 50) {
+        // 50: rainbow phoenix-comet streaks diagonally across background, right to left
+        const { w, h } = s.viewport;
+        s.cometTimer = 2.8;
+        s.comet = {
+            startX: w + 120,
+            startY: h * 0.18,
+            endX: -180,
+            endY: h * 0.42,
+            life: 2.8,
+            total: 2.8,
+        };
+    } else if (score === 100) {
         // Find the most recently spawned pipe to sit the guardian on top of
         const upcoming = s.pipes.filter((p) => !p.scored);
         const pipe = upcoming[upcoming.length - 1] || s.pipes[s.pipes.length - 1];
@@ -403,6 +417,11 @@ function tickEffectTimers(s, dt) {
     }
     if (s.voidBreachTimer > 0) s.voidBreachTimer = Math.max(0, s.voidBreachTimer - dt);
     if (s.invertedTimer > 0) s.invertedTimer = Math.max(0, s.invertedTimer - dt);
+    if (s.cometTimer > 0) {
+        s.cometTimer = Math.max(0, s.cometTimer - dt);
+        if (s.comet) s.comet.life = s.cometTimer;
+        if (s.cometTimer === 0) s.comet = null;
+    }
 }
 
 /**
@@ -658,6 +677,116 @@ function drawFlock(ctx, s) {
     ctx.restore();
 }
 
+// 50-mark: rainbow phoenix-comet streaks diagonally across the background.
+// Triangle body with rainbow gradient, single white eye, cyan flame above,
+// orange flame trail behind, plus sparks.
+function drawComet(ctx, s) {
+    if (s.cometTimer <= 0 || !s.comet) return;
+    const c = s.comet;
+    const t = 1 - c.life / c.total; // 0 -> 1 progress
+    const x = c.startX + (c.endX - c.startX) * t;
+    // Slight sine wave so it doesn't feel like a straight line
+    const baseY = c.startY + (c.endY - c.startY) * t;
+    const y = baseY + Math.sin(t * Math.PI * 2.5) * 18;
+
+    // Fade in/out at the edges of the timer
+    const fade = Math.min(1, Math.min(c.life / 0.4, (c.total - c.life) / 0.3));
+
+    const size = 22; // half-width of the triangle body
+
+    ctx.save();
+    ctx.globalAlpha = fade * 0.85;
+    ctx.translate(x, y);
+    // Point the triangle in the direction of travel (leftward, with slight tilt)
+    const angle = Math.atan2(c.endY - c.startY, c.endX - c.startX);
+    ctx.rotate(angle);
+
+    // --- Orange flame trail (drawn first, behind the body) ---
+    ctx.shadowColor = "#FF8800";
+    ctx.shadowBlur = 18;
+    for (let i = 0; i < 10; i++) {
+        const flicker = 0.7 + Math.sin(s.timeSec * 18 + i) * 0.3;
+        const fx = size + i * 10;
+        const fy = Math.sin(i * 0.7 + s.timeSec * 6) * (3 + i * 0.6);
+        const fr = (10 - i) * 1.6 * flicker;
+        const gradColor = i < 5 ? "#FFD600" : "#FF6600";
+        ctx.fillStyle = gradColor;
+        ctx.globalAlpha = fade * (0.85 - i * 0.07);
+        ctx.beginPath();
+        ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = fade * 0.85;
+
+    // --- Cyan flame "halo" above the body ---
+    ctx.shadowColor = "#00F0FF";
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = "#00F0FF";
+    for (let i = 0; i < 5; i++) {
+        const flicker = 0.7 + Math.sin(s.timeSec * 22 + i) * 0.3;
+        ctx.globalAlpha = fade * (0.6 - i * 0.1);
+        ctx.beginPath();
+        ctx.arc(-i * 3, -size - 4 - i * 2, (8 - i) * flicker, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = fade * 0.95;
+
+    // --- Triangle body with rainbow gradient ---
+    const grad = ctx.createLinearGradient(-size, -size, size, size);
+    grad.addColorStop(0, "#FF3366");
+    grad.addColorStop(0.25, "#FFD600");
+    grad.addColorStop(0.5, "#39FF14");
+    grad.addColorStop(0.75, "#00F0FF");
+    grad.addColorStop(1, "#A663FF");
+    ctx.fillStyle = grad;
+    ctx.shadowColor = "#FFFFFF";
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(-size, 0); // tip (pointing direction of motion = forward = -x in local space)
+    ctx.lineTo(size, -size * 0.7);
+    ctx.lineTo(size, size * 0.7);
+    ctx.closePath();
+    ctx.fill();
+
+    // White outline for that "neon outlined" look
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    // --- Single white eye in the body ---
+    ctx.shadowColor = "#FFFFFF";
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.beginPath();
+    ctx.arc(2, 0, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#050508";
+    ctx.beginPath();
+    ctx.arc(3, 0, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.beginPath();
+    ctx.arc(3.8, -1, 1.0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // --- Spark trail (small dots in the flame wake) ---
+    ctx.shadowBlur = 0;
+    for (let i = 0; i < 14; i++) {
+        const sp = size + i * 14 + (i % 3) * 3;
+        const sy = Math.sin(i * 1.3 + s.timeSec * 8) * 12;
+        const colorRoll = i % 4;
+        ctx.fillStyle = ["#FFD600", "#00F0FF", "#FF3366", "#FFFFFF"][colorRoll];
+        ctx.globalAlpha = fade * (0.7 - i * 0.04);
+        const r = 1.4 + (i % 2) * 0.6;
+        ctx.beginPath();
+        ctx.arc(sp, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
 // 300-mark: VOID BREACH banner + chromatic distortion.
 function drawVoidBreach(ctx, s, w, h) {
     if (s.voidBreachTimer <= 0) return;
@@ -715,6 +844,8 @@ export function draw(canvas, s) {
         ctx.translate(randRange(s.rng, -6, 6) * s.shake, randRange(s.rng, -6, 6) * s.shake);
     }
 
+    // Cameo: 50-mark phoenix-comet streaks across the background
+    drawComet(ctx, s);
     // Cameo: 200-mark flock flies behind pipes
     drawFlock(ctx, s);
     for (const p of s.pipes) drawPipe(ctx, p, h);
